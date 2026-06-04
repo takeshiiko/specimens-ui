@@ -239,11 +239,10 @@
     /* ─── Layout ─── */
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 460px) 360px;
+      grid-template-columns: minmax(0, 420px) 1fr 1fr;
       gap: 14px;
       padding: 14px;
-      align-items: start;
-      justify-content: center;
+      align-items: stretch;
     }
 
     /* ─── Plate (left) ─── */
@@ -1132,11 +1131,10 @@
         </div>
       </section>
 
-      <!-- Right: side panels -->
-      <aside class="side">
+      <!-- Middle: wallet exposure -->
+      <section class="panel" aria-label="Wallet exposure scan" style="align-self:stretch">
 
-        <!-- Wallet Exposure Scan -->
-        <section class="panel" aria-label="Wallet exposure scan">
+        <!-- Wallet Exposure Scan (now direct child of layout) -->
           <div class="panel-title">
             <span>Wallet Exposure Scan</span>
             <span class="panel-title-badge">Risk Curve</span>
@@ -1196,8 +1194,10 @@
           </div>
         </section>
 
-        <!-- Mint Specimen -->
-        <section class="panel" aria-label="Mint specimen">
+      </section>
+
+      <!-- Right: mint -->
+      <section class="panel" aria-label="Mint specimen" style="align-self:stretch">
           <div class="panel-title">
             <span>Mint Specimen</span>
             <span class="panel-title-badge">Max 5 per tx</span>
@@ -1225,9 +1225,8 @@
               <strong id="scanStatus">Awaiting Wallet</strong>
             </div>
           </div>
-        </section>
+      </section>
 
-      </aside>
     </div>
 
     <!-- ─── Reveal Logic ─── -->
