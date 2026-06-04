@@ -806,6 +806,44 @@
       line-height: 1.55;
     }
 
+    /* ─── Reveal Logic Bar ─── */
+    .reveal-logic-bar {
+      margin: 0 16px 16px;
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .reveal-logic-inner {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr 2fr;
+      gap: 0;
+      align-items: center;
+    }
+
+    .reveal-logic-inner .reveal-row {
+      border: none;
+      background: none;
+      padding: 16px 20px;
+    }
+
+    .reveal-logic-divider {
+      font-family: var(--mono);
+      font-size: 18px;
+      color: var(--rule-strong);
+      padding: 0 4px;
+      user-select: none;
+    }
+
+    .reveal-logic-note {
+      padding: 14px 20px;
+      border-left: 1px solid var(--rule);
+      color: #5c420f;
+      font-size: 12px;
+      line-height: 1.55;
+      background: var(--amber-bg);
+    }
+
     /* ─── Probabilities ─── */
     .probabilities {
       margin: 0 16px 16px;
@@ -1187,36 +1225,36 @@
           </div>
         </section>
 
-        <!-- Reveal Logic -->
-        <section class="panel" aria-label="Reveal logic">
-          <div class="panel-title">
-            <span>Reveal Logic</span>
-            <span class="panel-title-badge">Two State</span>
-          </div>
-          <div class="panel-inner">
-            <div class="reveal-grid">
-              <div class="reveal-row">
-                <span class="step-tag">01</span>
-                <div>
-                  <strong>Sealed</strong>
-                  <span>Minted organism — identity fully hidden</span>
-                </div>
-              </div>
-              <div class="reveal-row">
-                <span class="step-tag">02</span>
-                <div>
-                  <strong>Revealed</strong>
-                  <span>Team reveals all at once — infection class confirmed</span>
-                </div>
-              </div>
-            </div>
-            <div class="panel-note">
-              Wallet exposure shifts infection probabilities at reveal. Old wallets are not safer — they may be more compatible.
-            </div>
-          </div>
-        </section>
       </aside>
     </div>
+
+    <!-- ─── Reveal Logic ─── -->
+    <section class="reveal-logic-bar" aria-label="Reveal logic">
+      <div class="panel-title">
+        <span>Reveal Logic</span>
+        <span class="panel-title-badge">Two State</span>
+      </div>
+      <div class="reveal-logic-inner">
+        <div class="reveal-row">
+          <span class="step-tag">01</span>
+          <div>
+            <strong>Sealed</strong>
+            <span>Minted organism — identity fully hidden</span>
+          </div>
+        </div>
+        <div class="reveal-logic-divider" aria-hidden="true">→</div>
+        <div class="reveal-row">
+          <span class="step-tag">02</span>
+          <div>
+            <strong>Revealed</strong>
+            <span>Team reveals all at once — infection class confirmed</span>
+          </div>
+        </div>
+        <div class="reveal-logic-note">
+          Wallet exposure shifts probabilities at reveal. Old wallets are not safer — they may be more compatible.
+        </div>
+      </div>
+    </section>
 
     <!-- ─── Infection outcome probabilities ─── -->
     <section class="probabilities" aria-label="Infection outcome probabilities">
