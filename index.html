@@ -248,13 +248,13 @@
     /* ─── Plate (left) ─── */
     .plate {
       position: relative;
-      min-height: 0;
-      aspect-ratio: 1 / 1.05;
       border: 1px solid var(--rule);
       background:
         linear-gradient(90deg, rgba(38, 123, 120, 0.07) 0%, transparent 30%, rgba(196, 126, 24, 0.07) 100%),
         rgba(255, 252, 244, 0.52);
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     /* Corner marks */
@@ -267,18 +267,8 @@
     }
     .plate-corner--tl { top: 12px; left: 12px; border-top: 1.5px solid var(--teal); border-left: 1.5px solid var(--teal); }
     .plate-corner--tr { top: 12px; right: 12px; border-top: 1.5px solid var(--teal); border-right: 1.5px solid var(--teal); }
-    .plate-corner--bl { bottom: 80px; left: 12px; border-bottom: 1.5px solid var(--teal); border-left: 1.5px solid var(--teal); }
-    .plate-corner--br { bottom: 80px; right: 12px; border-bottom: 1.5px solid var(--teal); border-right: 1.5px solid var(--teal); }
-
-    /* Inner ring decoration */
-    .plate::before {
-      content: "";
-      position: absolute;
-      inset: 32px;
-      border: 1px solid rgba(38, 123, 120, 0.13);
-      pointer-events: none;
-      z-index: 1;
-    }
+    .plate-corner--bl { bottom: 12px; left: 12px; border-bottom: 1.5px solid var(--teal); border-left: 1.5px solid var(--teal); }
+    .plate-corner--br { bottom: 12px; right: 12px; border-bottom: 1.5px solid var(--teal); border-right: 1.5px solid var(--teal); }
 
     .plate-head {
       position: relative;
@@ -337,15 +327,14 @@
 
     /* Specimen art */
     .specimen-wrap {
-      position: absolute;
-      inset: 24px 24px 90px;
       display: grid;
       place-items: center;
+      padding: 20px 20px 12px;
     }
 
     .specimen-card {
       position: relative;
-      width: min(520px, 78%);
+      width: 100%;
       aspect-ratio: 1;
       display: grid;
       place-items: center;
@@ -432,14 +421,10 @@
 
     /* Stage timeline */
     .timeline {
-      position: absolute;
-      z-index: 4;
-      left: 16px;
-      right: 16px;
-      bottom: 14px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
+      padding: 0 16px 16px;
     }
 
     .stage {
@@ -997,7 +982,7 @@
       .specimen-card { width: 100%; }
       .annotation { display: none; }
       .crosshair { display: none; }
-      .timeline { left: 12px; right: 12px; grid-template-columns: 1fr 1fr; bottom: 12px; max-width: 100%; }
+      .timeline { grid-template-columns: 1fr 1fr; }
 
       .scan-grid { grid-template-columns: 1fr; }
       .risk-section { grid-template-columns: 1fr; }
