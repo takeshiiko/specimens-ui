@@ -1,0 +1,1415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SPECIMENS / Parasite Scan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper:        #f4eedf;
+      --paper-2:      #e8dece;
+      --paper-3:      #faf6ec;
+      --ink:          #1a2322;
+      --ink-2:        #2e3d3a;
+      --muted:        #6a726b;
+      --rule:         rgba(35, 55, 50, 0.16);
+      --rule-strong:  rgba(35, 55, 50, 0.36);
+      --teal:         #267b78;
+      --teal-light:   #3ba49f;
+      --teal-dark:    #154d4e;
+      --teal-bg:      rgba(38, 123, 120, 0.08);
+      --amber:        #c47e18;
+      --amber-bg:     rgba(196, 126, 24, 0.09);
+      --purple:       #6b4a82;
+      --purple-bg:    rgba(107, 74, 130, 0.09);
+      --violet:       #9d6cb3;
+      --red:          #b44540;
+      --red-bg:       rgba(180, 69, 64, 0.09);
+      --green:        #5f8948;
+      --green-bg:     rgba(95, 137, 72, 0.09);
+      --panel:        rgba(252, 248, 238, 0.82);
+      --panel-border: rgba(35, 55, 50, 0.14);
+      --shadow-sm:    0 4px 16px rgba(40, 30, 15, 0.08);
+      --shadow-md:    0 12px 44px rgba(40, 30, 15, 0.11);
+      --shadow-lg:    0 28px 80px rgba(40, 30, 15, 0.14);
+      --serif:        Georgia, "Times New Roman", serif;
+      --mono:         "SFMono-Regular", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+      --sans:         Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+      background:
+        radial-gradient(ellipse 60% 40% at 18% 12%, rgba(38, 123, 120, 0.11), transparent),
+        radial-gradient(ellipse 48% 36% at 84% 8%,  rgba(196, 126, 24, 0.13),  transparent),
+        radial-gradient(ellipse 56% 44% at 76% 82%, rgba(107, 74, 130, 0.10),  transparent),
+        linear-gradient(148deg, #fdf9ef 0%, #f4eedf 50%, #ddd0bc 100%);
+      overflow-x: hidden;
+    }
+
+    /* Subtle grid texture */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.30;
+      background-image:
+        linear-gradient(rgba(28, 37, 37, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(28, 37, 37, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse 90% 80% at 50% 42%, black 30%, transparent 80%);
+    }
+
+    h1, h2, h3, h4 { margin: 0; }
+    p { margin: 0; }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      color: inherit;
+      font: inherit;
+      border: 1px solid var(--rule);
+      background: rgba(255, 252, 244, 0.70);
+      cursor: pointer;
+      border-radius: 0;
+      transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+    }
+    button:hover  { border-color: var(--rule-strong); background: rgba(255, 252, 244, 0.96); }
+    button:active { background: var(--paper-2); }
+    button:focus-visible { outline: 2px solid rgba(38, 123, 120, 0.45); outline-offset: 2px; }
+
+    /* ─── Shell ─── */
+    .shell {
+      position: relative;
+      z-index: 1;
+      width: min(1580px, calc(100vw - 32px));
+      margin: 20px auto;
+      border: 1px solid var(--rule-strong);
+      background: linear-gradient(180deg, rgba(255,253,244,0.84) 0%, rgba(244,238,226,0.88) 100%);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* ─── Topbar ─── */
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 280px) 1fr auto;
+      align-items: stretch;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 22px;
+      border-right: 1px solid var(--rule);
+    }
+
+    .seal {
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      width: 50px;
+      height: 50px;
+      border: 1.5px solid var(--teal);
+      border-radius: 50%;
+      color: var(--teal);
+      background: var(--teal-bg);
+      box-shadow: 0 0 0 5px rgba(38, 123, 120, 0.06);
+    }
+
+    .brand-text h1 {
+      font-family: var(--serif);
+      font-size: 26px;
+      font-weight: 400;
+      letter-spacing: 6px;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    .brand-text p {
+      margin-top: 5px;
+      color: var(--teal-dark);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .stat {
+      display: grid;
+      align-content: center;
+      padding: 14px 22px;
+      border-right: 1px solid var(--rule);
+      gap: 5px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-family: var(--mono);
+      font-size: 21px;
+      letter-spacing: 0.5px;
+      color: var(--ink);
+    }
+
+    .value small {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0;
+    }
+
+    /* Minted progress */
+    .mint-progress {
+      height: 3px;
+      background: var(--rule);
+      overflow: hidden;
+      border-radius: 0;
+      margin-top: 6px;
+    }
+
+    .mint-progress-bar {
+      height: 100%;
+      width: 22.48%;
+      background: linear-gradient(90deg, var(--teal), var(--teal-light));
+      transition: width 0.6s ease;
+    }
+
+    /* Top actions */
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 18px;
+    }
+
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      color: var(--teal-dark);
+    }
+
+    .connect {
+      min-width: 200px;
+      padding: 0 20px;
+      border-color: rgba(38, 123, 120, 0.45);
+      background: linear-gradient(175deg, #2c9290, #185b5c);
+      color: #fffdf2;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      box-shadow: 0 6px 20px rgba(38, 123, 120, 0.22), inset 0 1px 0 rgba(255,255,255,0.12);
+      transition: box-shadow 0.22s, transform 0.12s, background 0.22s;
+    }
+    .connect:hover {
+      background: linear-gradient(175deg, #31a09d, #1d6b6c);
+      box-shadow: 0 8px 26px rgba(38, 123, 120, 0.30);
+    }
+    .connect:active { transform: translateY(1px); }
+    .connect.connected {
+      background: linear-gradient(175deg, #1e6e6c, #134748);
+      border-color: rgba(38, 123, 120, 0.60);
+    }
+
+    /* ─── Layout ─── */
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(370px, 0.75fr);
+      gap: 16px;
+      padding: 16px;
+    }
+
+    /* ─── Plate (left) ─── */
+    .plate {
+      position: relative;
+      min-height: 780px;
+      border: 1px solid var(--rule);
+      background:
+        linear-gradient(90deg, rgba(38, 123, 120, 0.07) 0%, transparent 30%, rgba(196, 126, 24, 0.07) 100%),
+        rgba(255, 252, 244, 0.52);
+      overflow: hidden;
+    }
+
+    /* Corner marks */
+    .plate-corner {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .plate-corner--tl { top: 12px; left: 12px; border-top: 1.5px solid var(--teal); border-left: 1.5px solid var(--teal); }
+    .plate-corner--tr { top: 12px; right: 12px; border-top: 1.5px solid var(--teal); border-right: 1.5px solid var(--teal); }
+    .plate-corner--bl { bottom: 112px; left: 12px; border-bottom: 1.5px solid var(--teal); border-left: 1.5px solid var(--teal); }
+    .plate-corner--br { bottom: 112px; right: 12px; border-bottom: 1.5px solid var(--teal); border-right: 1.5px solid var(--teal); }
+
+    /* Inner ring decoration */
+    .plate::before {
+      content: "";
+      position: absolute;
+      inset: 32px;
+      border: 1px solid rgba(38, 123, 120, 0.13);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .plate-head {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 26px 28px 0;
+    }
+
+    .plate-head::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      bottom: -20px;
+      background: linear-gradient(180deg, rgba(248, 244, 234, 0.92) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .plate-title h2 {
+      font-family: var(--serif);
+      font-size: clamp(40px, 4.5vw, 74px);
+      font-weight: 400;
+      line-height: 0.92;
+      letter-spacing: -1px;
+      color: var(--ink);
+    }
+
+    .plate-title p {
+      max-width: 400px;
+      margin-top: 14px;
+      color: #4e5a54;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+
+    .specimen-id {
+      min-width: 176px;
+      padding: 12px 16px;
+      border: 1px solid var(--rule);
+      background: rgba(255, 252, 244, 0.60);
+      display: grid;
+      gap: 14px;
+    }
+
+    .specimen-id-row {
+      display: grid;
+      gap: 3px;
+    }
+
+    .specimen-id .value {
+      font-size: 15px;
+    }
+
+    /* Specimen art */
+    .specimen-wrap {
+      position: absolute;
+      inset: 30px 80px 100px;
+      display: grid;
+      place-items: center;
+    }
+
+    .specimen-card {
+      position: relative;
+      width: min(460px, 68%);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    /* Outer dashed orbit */
+    .specimen-card::before {
+      content: "";
+      position: absolute;
+      inset: -2%;
+      border: 1px dashed rgba(38, 123, 120, 0.25);
+      border-radius: 50%;
+      animation: orbit 32s linear infinite;
+    }
+
+    /* Inner amber ring */
+    .specimen-card::after {
+      content: "";
+      position: absolute;
+      inset: 12%;
+      border: 1px solid rgba(196, 126, 24, 0.18);
+      border-radius: 50%;
+    }
+
+    .specimen-art {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: contrast(1.02) saturate(1.05);
+    }
+
+    /* Annotation lines */
+    .annotation {
+      position: absolute;
+      z-index: 3;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #2e403c;
+      display: grid;
+      gap: 4px;
+    }
+
+    .annotation span {
+      color: var(--muted);
+    }
+
+    .annotation-line {
+      position: absolute;
+      background: var(--rule-strong);
+      pointer-events: none;
+    }
+
+    .a1 { left: 48px; top: 345px; padding-left: 50px; }
+    .a1 .annotation-line { width: 40px; height: 1px; top: 9px; left: 0; }
+
+    .a2 { right: 56px; top: 415px; padding-right: 50px; text-align: right; }
+    .a2 .annotation-line { width: 40px; height: 1px; top: 9px; right: 0; }
+
+    .a3 { left: 78px; bottom: 128px; padding-left: 50px; }
+    .a3 .annotation-line { width: 40px; height: 1px; top: 9px; left: 0; }
+
+    /* Crosshair indicator */
+    .crosshair {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      pointer-events: none;
+      z-index: 4;
+    }
+    .crosshair::before,
+    .crosshair::after {
+      content: "";
+      position: absolute;
+      background: var(--amber);
+      opacity: 0.55;
+    }
+    .crosshair::before { width: 1px; height: 100%; left: 50%; }
+    .crosshair::after  { height: 1px; width: 100%; top: 50%; }
+    .crosshair--amber { top: 310px; left: 50%; margin-left: 60px; }
+
+    /* Stage timeline */
+    .timeline {
+      position: absolute;
+      z-index: 4;
+      left: 24px;
+      right: 24px;
+      bottom: 18px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--rule);
+      background: rgba(252, 248, 238, 0.80);
+      transition: border-color 0.25s, background 0.25s;
+    }
+
+    .stage.active {
+      border-color: rgba(38, 123, 120, 0.50);
+      background: rgba(224, 242, 238, 0.90);
+    }
+
+    .stage.done {
+      border-color: rgba(38, 123, 120, 0.30);
+      opacity: 0.80;
+    }
+
+    .stage-num {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      color: var(--teal);
+      font-family: var(--mono);
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .stage.active .stage-num {
+      background: rgba(38, 123, 120, 0.12);
+    }
+
+    .stage strong {
+      display: block;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .stage span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+    }
+
+    /* ─── Side panels ─── */
+    .side {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .panel {
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .panel-inner {
+      padding: 18px 20px 20px;
+    }
+
+    .panel-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .panel-title-badge {
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 1.5px;
+    }
+
+    /* Scan panel */
+    .scan-grid {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .scan-seal {
+      display: grid;
+      place-items: center;
+      width: 100px;
+      height: 100px;
+      border: 1px solid rgba(38, 123, 120, 0.35);
+      border-radius: 50%;
+      color: var(--teal);
+      background:
+        radial-gradient(circle, rgba(38, 123, 120, 0.10), transparent 64%),
+        rgba(255, 252, 244, 0.60);
+      position: relative;
+    }
+
+    .scan-seal::before {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      border: 1px dashed rgba(38, 123, 120, 0.20);
+      border-radius: 50%;
+      animation: orbit 18s linear infinite reverse;
+    }
+
+    .scan-seal.scanning::before {
+      animation-duration: 3s;
+      border-color: rgba(38, 123, 120, 0.50);
+    }
+
+    .exposure-class {
+      color: var(--amber);
+      font-family: var(--mono);
+      font-size: 17px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+      transition: color 0.4s;
+    }
+
+    .exposure-note {
+      margin-top: 8px;
+      color: #525f58;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .meta-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--rule);
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .meta-row strong {
+      font-weight: 500;
+      color: var(--ink);
+      text-align: right;
+      transition: color 0.3s;
+    }
+
+    /* Risk number + curve */
+    .risk-section {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: end;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--rule);
+    }
+
+    .risk-number-wrap .label { display: block; }
+
+    .risk-number {
+      font-family: var(--serif);
+      font-size: 58px;
+      line-height: 1;
+      color: var(--teal-dark);
+      letter-spacing: -2px;
+      transition: color 0.4s;
+    }
+
+    .risk-number sup {
+      font-size: 22px;
+      letter-spacing: 0;
+      vertical-align: super;
+    }
+
+    /* SVG Curve */
+    .curve-wrap {
+      position: relative;
+      height: 88px;
+    }
+
+    .curve-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* Mint panel */
+    .qty-stepper {
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      gap: 6px;
+      margin-top: 16px;
+    }
+
+    .qty-btn {
+      font-size: 20px;
+      font-family: var(--mono);
+      color: var(--teal-dark);
+      border-color: rgba(38, 123, 120, 0.28);
+    }
+
+    .qty-display {
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--rule);
+      background: rgba(255, 252, 244, 0.75);
+      font-family: var(--mono);
+      font-size: 20px;
+      letter-spacing: 1px;
+      color: var(--ink);
+    }
+
+    .presets {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .preset {
+      height: 32px;
+      min-height: unset;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      border-color: var(--rule);
+    }
+
+    .preset:hover, .preset.active-preset {
+      color: var(--teal-dark);
+      border-color: rgba(38, 123, 120, 0.40);
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 16px 0 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .total-row strong {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    .mint-btn {
+      width: 100%;
+      min-height: 52px;
+      border-color: rgba(38, 123, 120, 0.45);
+      background: linear-gradient(175deg, #2c9290, #185b5c);
+      color: #fffdf2;
+      font-family: var(--mono);
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      box-shadow: 0 8px 22px rgba(38, 123, 120, 0.20), inset 0 1px 0 rgba(255,255,255,0.10);
+      transition: box-shadow 0.22s, transform 0.12s, background 0.22s;
+    }
+
+    .mint-btn:hover {
+      background: linear-gradient(175deg, #31a09d, #1d6b6c);
+      box-shadow: 0 10px 28px rgba(38, 123, 120, 0.28);
+    }
+
+    .mint-btn:active { transform: translateY(1px); }
+
+
+    .scan-status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .scan-status-row strong {
+      color: var(--teal-dark);
+      font-weight: 600;
+      text-align: right;
+      transition: color 0.3s;
+    }
+
+    /* Pulse dot */
+    .status-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--teal);
+      margin-right: 6px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Reveal logic panel */
+    .reveal-grid {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .reveal-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--rule);
+      background: rgba(255, 252, 244, 0.55);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .reveal-row .step-tag {
+      color: var(--teal);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .reveal-row strong {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.8px;
+      color: var(--ink);
+    }
+
+    .reveal-row span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 10.5px;
+    }
+
+    .panel-note {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--amber-bg);
+      background: var(--amber-bg);
+      color: #5c420f;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    /* ─── Probabilities ─── */
+    .probabilities {
+      margin: 0 16px 16px;
+      border: 1px solid var(--panel-border);
+      background: var(--panel);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .prob-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .prob-head h2 {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .prob-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0;
+    }
+
+    .prob {
+      padding: 16px 18px;
+      border-right: 1px solid var(--rule);
+    }
+
+    .prob:last-child { border-right: 0; }
+
+    .prob-name {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .prob-desc {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+
+    .prob-pct {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+
+    .bar {
+      height: 5px;
+      background: rgba(28, 37, 37, 0.10);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0;
+      background: var(--c);
+      transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* ─── Footer ─── */
+    .footer {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-top: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .footer-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-right: 1px solid var(--rule);
+    }
+
+    .footer-cell:last-child { border-right: 0; }
+
+    .footer-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--teal);
+      flex-shrink: 0;
+    }
+
+    /* ─── Animations ─── */
+    @keyframes orbit {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .specimen-card::before,
+      .scan-seal::before { animation: none; }
+      .bar-fill { transition: none; }
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 1200px) {
+      .topbar { grid-template-columns: minmax(220px, 260px) 1fr; }
+      .top-actions { display: none; } /* move to layout on tablet */
+      .layout { grid-template-columns: 1fr; }
+      .prob-grid { grid-template-columns: repeat(3, 1fr); }
+      .prob:nth-child(3) { border-right: 0; }
+    }
+
+    @media (max-width: 860px) {
+      .topbar { grid-template-columns: 1fr; }
+      .brand { border-right: 0; border-bottom: 1px solid var(--rule); }
+      .stats { grid-template-columns: repeat(3, 1fr); }
+      .stat { border-right: 1px solid var(--rule); }
+      .stat:last-child { border-right: 0; }
+      .top-actions { display: flex; border-top: 1px solid var(--rule); }
+    }
+
+    @media (max-width: 700px) {
+      .shell {
+        width: 100%;
+        margin: 0;
+        border-left: 0;
+        border-right: 0;
+      }
+
+      .brand-text h1 { font-size: 22px; letter-spacing: 4px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+
+      .plate { min-height: 840px; }
+
+      .plate-head {
+        display: grid;
+        padding: 18px 18px 0;
+        gap: 14px;
+      }
+
+      .plate-title h2 { font-size: 42px; }
+
+      .specimen-id {
+        border-top: 0;
+        border-left: 0;
+        border-right: 0;
+        background: transparent;
+        padding: 0;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .specimen-wrap { inset: 340px 8px 220px; }
+      .specimen-card { width: 100%; }
+      .annotation { display: none; }
+      .crosshair { display: none; }
+      .timeline { left: 12px; right: 12px; grid-template-columns: 1fr 1fr; bottom: 12px; max-width: 100%; }
+
+      .scan-grid { grid-template-columns: 1fr; }
+      .risk-section { grid-template-columns: 1fr; }
+
+      .presets { display: none; }
+
+      .prob-grid { grid-template-columns: 1fr 1fr; }
+      .prob { border-right: 0; border-bottom: 1px solid var(--rule); }
+      .prob:last-child { border-bottom: 0; }
+
+      .footer { grid-template-columns: 1fr; }
+      .footer-cell { border-right: 0; border-bottom: 1px solid var(--rule); }
+      .footer-cell:last-child { border-bottom: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell" role="main">
+
+    <!-- ─── Topbar ─── -->
+    <header class="topbar">
+      <section class="brand" aria-label="Collection brand">
+        <div class="seal" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M12 3v6m0 6v6M6.8 6.5l4.2 2.7m2 5.6 4.2 2.7M17.2 6.5 13 9.2m-2 5.6-4.2 2.7"
+                  stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.3"/>
+            <circle cx="12" cy="3.9"  r="1.8" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="5"  cy="18"   r="1.8" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="19" cy="18"   r="1.8" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>SPECIMENS</h1>
+          <p>parasite scan — ERC-721A</p>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="Mint statistics">
+        <div class="stat">
+          <div class="label">Supply</div>
+          <div class="value">10,000</div>
+        </div>
+        <div class="stat">
+          <div class="label">Mint Price</div>
+          <div class="value">0.00054 ETH</div>
+        </div>
+        <div class="stat">
+          <div class="label">Minted</div>
+          <div class="value" id="mintedVal">2,241 <small>22.41%</small></div>
+          <div class="mint-progress" role="progressbar" aria-valuenow="22" aria-valuemin="0" aria-valuemax="100" aria-label="22% minted">
+            <div class="mint-progress-bar" id="mintBar"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="top-actions" aria-label="Wallet connection">
+        <button class="icon-btn" aria-label="View collection archive">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M5 5h14v14H5z" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="connect" id="connect" aria-pressed="false">Connect Wallet</button>
+      </section>
+    </header>
+
+    <!-- ─── Main layout ─── -->
+    <div class="layout">
+
+      <!-- Left: specimen plate -->
+      <section class="plate" aria-label="Specimen preview plate">
+
+        <!-- Corner marks -->
+        <div class="plate-corner plate-corner--tl" aria-hidden="true"></div>
+        <div class="plate-corner plate-corner--tr" aria-hidden="true"></div>
+        <div class="plate-corner plate-corner--bl" aria-hidden="true"></div>
+        <div class="plate-corner plate-corner--br" aria-hidden="true"></div>
+
+
+        <!-- Specimen art -->
+        <div class="specimen-wrap">
+          <div class="specimen-card">
+            <img class="specimen-art"
+                 src="assets/specimen-art.png"
+                 alt="Illustrated microscopic parasite organism — teal cell body, amber nucleus, violet spore tendrils" />
+          </div>
+        </div>
+
+
+        <!-- Reveal timeline -->
+        <div class="timeline timeline--two" role="list" aria-label="Reveal stages">
+          <article class="stage active" role="listitem" id="stage1">
+            <div class="stage-num" aria-hidden="true">1</div>
+            <div>
+              <strong>Sealed</strong>
+              <span>Organism unknown — mint confirms plate</span>
+            </div>
+          </article>
+          <article class="stage" role="listitem" id="stage2">
+            <div class="stage-num" aria-hidden="true">2</div>
+            <div>
+              <strong>Team Reveal</strong>
+              <span id="stage2Sub">Infection outcome announced</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Right: side panels -->
+      <aside class="side">
+
+        <!-- Wallet Exposure Scan -->
+        <section class="panel" aria-label="Wallet exposure scan">
+          <div class="panel-title">
+            <span>Wallet Exposure Scan</span>
+            <span class="panel-title-badge">Risk Curve</span>
+          </div>
+          <div class="panel-inner">
+            <div class="scan-grid">
+              <div class="scan-seal" id="scanSeal" aria-hidden="true">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="8.2" stroke="currentColor" stroke-width="1.1"/>
+                  <path d="M12 4v4m0 8v4M4 12h4m8 0h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+                  <path d="M8.7 8.7 6.2 6.2m9.1 2.5 2.5-2.5M15.3 15.3l2.5 2.5m-9.1-2.5-2.5 2.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+                  <circle cx="12" cy="12" r="2.7" fill="currentColor" opacity=".18"/>
+                </svg>
+              </div>
+              <div>
+                <div class="label">Exposure Classification</div>
+                <div class="exposure-class" id="classValue">Moderate Risk</div>
+                <p class="exposure-note">Wallet age shifts compatibility probabilities — not a rarity guarantee.</p>
+              </div>
+            </div>
+
+            <div class="meta-list">
+              <div class="meta-row"><span>Wallet Age</span><strong id="walletAge">282 days</strong></div>
+              <div class="meta-row"><span>First Seen</span><strong id="firstSeen">2025-08-25</strong></div>
+              <div class="meta-row"><span>Interactions</span><strong id="interactions">37 contracts</strong></div>
+              <div class="meta-row"><span>Exposure Index</span><strong id="exposureIndex">0.36</strong></div>
+            </div>
+
+            <div class="risk-section">
+              <div class="risk-number-wrap">
+                <span class="label">Infection Risk</span>
+                <div class="risk-number" id="riskScore" aria-live="polite">36<sup>%</sup></div>
+              </div>
+              <div class="curve-wrap" aria-label="Exposure curve chart" role="img">
+                <svg class="curve-svg" viewBox="0 0 180 88" preserveAspectRatio="none">
+                  <!-- Grid lines -->
+                  <line x1="0" y1="22" x2="180" y2="22" stroke="rgba(28,37,37,0.08)" stroke-width="1"/>
+                  <line x1="0" y1="44" x2="180" y2="44" stroke="rgba(28,37,37,0.08)" stroke-width="1"/>
+                  <line x1="0" y1="66" x2="180" y2="66" stroke="rgba(28,37,37,0.08)" stroke-width="1"/>
+                  <line x1="60" y1="0" x2="60" y2="88" stroke="rgba(28,37,37,0.06)" stroke-width="1"/>
+                  <line x1="120" y1="0" x2="120" y2="88" stroke="rgba(28,37,37,0.06)" stroke-width="1"/>
+                  <!-- Area fill -->
+                  <path id="curveArea"
+                    d="M0,68 C10,60 18,54 28,62 S44,38 60,52 S72,60 84,66 S102,28 114,44 S132,56 150,62 L180,50 L180,88 L0,88 Z"
+                    fill="rgba(38,123,120,0.08)"/>
+                  <!-- Curve line -->
+                  <path id="curveLine"
+                    d="M0,68 C10,60 18,54 28,62 S44,38 60,52 S72,60 84,66 S102,28 114,44 S132,56 150,62 L180,50"
+                    fill="none" stroke="#267b78" stroke-width="2" stroke-linecap="round"/>
+                  <!-- Current position dot -->
+                  <circle id="curveDot" cx="84" cy="66" r="4.5" fill="#c47e18" stroke="rgba(255,252,244,0.8)" stroke-width="2"/>
+                  <!-- Vertical indicator -->
+                  <line id="curveIndicator" x1="84" y1="0" x2="84" y2="88" stroke="rgba(196,126,24,0.30)" stroke-width="1" stroke-dasharray="3 3"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Mint Specimen -->
+        <section class="panel" aria-label="Mint specimen">
+          <div class="panel-title">
+            <span>Mint Specimen</span>
+            <span class="panel-title-badge">Max 5 per tx</span>
+          </div>
+          <div class="panel-inner">
+            <div class="qty-stepper">
+              <button class="qty-btn" id="minus" aria-label="Decrease quantity">−</button>
+              <div class="qty-display" id="qty" aria-live="polite" aria-label="Quantity">1</div>
+              <button class="qty-btn" id="plus" aria-label="Increase quantity">+</button>
+            </div>
+            <div class="presets" aria-label="Quantity presets">
+              <button class="preset active-preset" data-qty="1">1</button>
+              <button class="preset" data-qty="2">2</button>
+              <button class="preset" data-qty="3">3</button>
+              <button class="preset" data-qty="4">4</button>
+              <button class="preset" data-qty="5">5</button>
+            </div>
+            <div class="total-row">
+              <span>Total</span>
+              <strong id="total">0.00054 ETH</strong>
+            </div>
+            <button class="mint-btn" id="mint">Mint Sealed Sample</button>
+            <div class="scan-status-row">
+              <span><span class="status-dot" aria-hidden="true"></span>Status</span>
+              <strong id="scanStatus">Awaiting Wallet</strong>
+            </div>
+          </div>
+        </section>
+
+        <!-- Reveal Logic -->
+        <section class="panel" aria-label="Reveal logic">
+          <div class="panel-title">
+            <span>Reveal Logic</span>
+            <span class="panel-title-badge">Two State</span>
+          </div>
+          <div class="panel-inner">
+            <div class="reveal-grid">
+              <div class="reveal-row">
+                <span class="step-tag">01</span>
+                <div>
+                  <strong>Sealed</strong>
+                  <span>Minted organism — identity fully hidden</span>
+                </div>
+              </div>
+              <div class="reveal-row">
+                <span class="step-tag">02</span>
+                <div>
+                  <strong>Revealed</strong>
+                  <span>Team reveals all at once — infection class confirmed</span>
+                </div>
+              </div>
+            </div>
+            <div class="panel-note">
+              Wallet exposure shifts infection probabilities at reveal. Old wallets are not safer — they may be more compatible.
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <!-- ─── Infection outcome probabilities ─── -->
+    <section class="probabilities" aria-label="Infection outcome probabilities">
+      <div class="prob-head">
+        <h2>Infection Outcome Probabilities</h2>
+        <span class="label">Common → Rare · Modified at Reveal by Wallet Exposure</span>
+      </div>
+      <div class="prob-grid">
+        <article class="prob">
+          <div class="prob-name" style="color: var(--ink);">Infected</div>
+          <div class="prob-desc">Base organism. Parasite fully dominant.</div>
+          <div class="prob-pct" style="color: var(--muted);">65%</div>
+          <div class="bar"><div class="bar-fill" style="--c: var(--muted);" data-w="65"></div></div>
+        </article>
+        <article class="prob">
+          <div class="prob-name" style="color: var(--amber);">Dormant</div>
+          <div class="prob-desc">Infection present but suppressed. Unstable.</div>
+          <div class="prob-pct" style="color: var(--amber);">20%</div>
+          <div class="bar"><div class="bar-fill" style="--c: var(--amber);" data-w="20"></div></div>
+        </article>
+        <article class="prob">
+          <div class="prob-name" style="color: var(--red);">Crown Strain</div>
+          <div class="prob-desc">Parasite controlled, host intact. Rare equilibrium.</div>
+          <div class="prob-pct" style="color: var(--red);">7%</div>
+          <div class="bar"><div class="bar-fill" style="--c: var(--red);" data-w="7"></div></div>
+        </article>
+        <article class="prob">
+          <div class="prob-name" style="color: var(--purple);">Symbiotic</div>
+          <div class="prob-desc">Full co-evolution. Parasite and host merged.</div>
+          <div class="prob-pct" style="color: var(--purple);">5%</div>
+          <div class="bar"><div class="bar-fill" style="--c: var(--purple);" data-w="5"></div></div>
+        </article>
+        <article class="prob">
+          <div class="prob-name" style="color: var(--teal-dark);">Clean</div>
+          <div class="prob-desc">No infection detected. Rarest state — degrades without transfer.</div>
+          <div class="prob-pct" style="color: var(--teal);">3%</div>
+          <div class="bar"><div class="bar-fill" style="--c: var(--teal);" data-w="3"></div></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ─── Footer ─── -->
+    <footer class="footer">
+      <div class="footer-cell">
+        <span class="footer-dot" aria-hidden="true"></span>
+        Lab Status: Online
+      </div>
+      <div class="footer-cell">
+        <span class="footer-dot" style="background: var(--amber);" aria-hidden="true"></span>
+        Network: Ethereum Mainnet
+      </div>
+      <div class="footer-cell">
+        <span class="footer-dot" style="background: var(--purple);" aria-hidden="true"></span>
+        Final rarity locked until reveal
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const PRICE = 0.00054;
+    let qty       = 1;
+    let connected = false;
+
+    /* ── DOM refs ── */
+    const qtyEl         = document.getElementById("qty");
+    const totalEl       = document.getElementById("total");
+    const connectBtn    = document.getElementById("connect");
+    const mintBtn       = document.getElementById("mint");
+    const scanStatusEl  = document.getElementById("scanStatus");
+    const riskScoreEl   = document.getElementById("riskScore");
+    const classValueEl  = document.getElementById("classValue");
+    const walletAgeEl   = document.getElementById("walletAge");
+    const firstSeenEl   = document.getElementById("firstSeen");
+    const interactEl    = document.getElementById("interactions");
+    const exposureEl    = document.getElementById("exposureIndex");
+    const scanSealEl    = document.getElementById("scanSeal");
+    const plateStatusEl = document.getElementById("plateStatus");
+    const stage2El      = document.getElementById("stage2");
+
+    /* ── Quantity stepper ── */
+    function renderQty() {
+      qtyEl.textContent   = qty;
+      totalEl.textContent = `${(qty * PRICE).toFixed(5)} ETH`;
+      document.querySelectorAll(".preset").forEach(btn => {
+        btn.classList.toggle("active-preset", Number(btn.dataset.qty) === qty);
+      });
+    }
+
+    document.getElementById("minus").addEventListener("click", () => { if (qty > 1) { qty--; renderQty(); } });
+    document.getElementById("plus").addEventListener("click",  () => { if (qty < 5) { qty++; renderQty(); } });
+    document.querySelectorAll(".preset").forEach(btn => {
+      btn.addEventListener("click", () => { qty = Number(btn.dataset.qty); renderQty(); });
+    });
+
+    /* ── Wallet connect (mock) ── */
+    const WALLETS = {
+      connected: {
+        label:        "0x8C4...19AF",
+        riskScore:    "68",
+        riskClass:    "Ancient Exposure",
+        riskColor:    "var(--red)",
+        walletAge:    "1,942 days",
+        firstSeen:    "2021-02-07",
+        interactions: "214 contracts",
+        exposureIdx:  "0.68",
+        curveDotX: 138, curveDotY: 32, indicatorX: 138,
+        status: "Wallet Scanned · Ready to Mint",
+      },
+      disconnected: {
+        label:        "Connect Wallet",
+        riskScore:    "—",
+        riskClass:    "Not Scanned",
+        riskColor:    "var(--muted)",
+        walletAge:    "—",
+        firstSeen:    "—",
+        interactions: "—",
+        exposureIdx:  "—",
+        curveDotX: 84, curveDotY: 66, indicatorX: 84,
+        status: "Awaiting Wallet",
+      },
+    };
+
+    function applyWallet(state) {
+      const w = WALLETS[state];
+      connectBtn.textContent = w.label;
+      connectBtn.classList.toggle("connected", state === "connected");
+      connectBtn.setAttribute("aria-pressed", String(state === "connected"));
+
+      riskScoreEl.innerHTML    = state === "connected" ? w.riskScore + "<sup>%</sup>" : "—";
+      classValueEl.textContent = w.riskClass;
+      classValueEl.style.color = w.riskColor;
+      walletAgeEl.textContent  = w.walletAge;
+      firstSeenEl.textContent  = w.firstSeen;
+      interactEl.textContent   = w.interactions;
+      exposureEl.textContent   = w.exposureIdx;
+
+      if (appState === "idle") scanStatusEl.textContent = w.status;
+
+      const dot = document.getElementById("curveDot");
+      const ind = document.getElementById("curveIndicator");
+      dot.setAttribute("cx", w.curveDotX);
+      dot.setAttribute("cy", w.curveDotY);
+      ind.setAttribute("x1", w.indicatorX);
+      ind.setAttribute("x2", w.indicatorX);
+
+      scanSealEl.classList.toggle("scanning", state === "connected");
+    }
+
+    connectBtn.addEventListener("click", () => {
+      connected = !connected;
+      scanSealEl.classList.add("scanning");
+      setTimeout(() => applyWallet(connected ? "connected" : "disconnected"), 500);
+    });
+
+    /* ── Mint ── */
+    mintBtn.addEventListener("click", () => {
+      if (!connected) {
+        scanStatusEl.textContent = "Connect wallet first";
+        scanStatusEl.style.color = "var(--red)";
+        return;
+      }
+
+      plateStatusEl.textContent = "Sealed";
+      stage2El.classList.add("active");
+      scanStatusEl.style.color  = "";
+      scanStatusEl.textContent  = "Sealed · Awaiting team reveal";
+
+      mintBtn.disabled     = true;
+      mintBtn.textContent  = "Sample Sealed";
+      mintBtn.style.background   = "linear-gradient(175deg, #2a5250, #162f30)";
+      mintBtn.style.boxShadow    = "none";
+      mintBtn.style.cursor       = "default";
+    });
+
+    /* ── Animate probability bars on load ── */
+    setTimeout(() => {
+      document.querySelectorAll(".bar-fill").forEach(fill => {
+        requestAnimationFrame(() => { fill.style.width = fill.dataset.w + "%"; });
+      });
+    }, 300);
+  </script>
+</body>
+</html>
