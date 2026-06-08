@@ -1739,8 +1739,8 @@
         ).size;
 
         // Exposure index
-        const ageScore      = Math.min(ageDays / 1825, 1);
-        const contractScore = Math.min(uniqueContracts / 100, 1);
+        const ageScore      = Math.min(ageDays / 730, 1);   // 2 yıl = max
+        const contractScore = Math.min(uniqueContracts / 25, 1);  // 25 unique adres = max
         const exposureIdx   = (ageScore * 0.6 + contractScore * 0.4).toFixed(2);
         const risk          = Math.round(parseFloat(exposureIdx) * 100);
         const cls           = EXPOSURE_CLASSES.find(c => risk >= c.min && risk < c.max) || EXPOSURE_CLASSES[3];
