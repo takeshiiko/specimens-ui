@@ -1467,27 +1467,28 @@
   </main>
 
   <script>
-    const PRICE = 0.00054;
-    let qty       = 1;
-    let connected = false;
+    const PRICE    = 0.00054;
+    const CHAIN_ID = "0x1"; // Ethereum Mainnet
+    let qty        = 1;
+    let connected  = false;
+    let account    = null;
 
     /* ── DOM refs ── */
-    const qtyEl         = document.getElementById("qty");
-    const totalEl       = document.getElementById("total");
-    const connectBtn    = document.getElementById("connect");
-    const mintBtn       = document.getElementById("mint");
-    const scanStatusEl  = document.getElementById("scanStatus");
-    const riskScoreEl   = document.getElementById("riskScore");
-    const classValueEl  = document.getElementById("classValue");
-    const walletAgeEl   = document.getElementById("walletAge");
-    const firstSeenEl   = document.getElementById("firstSeen");
-    const interactEl    = document.getElementById("interactions");
-    const exposureEl    = document.getElementById("exposureIndex");
-    const scanSealEl    = document.getElementById("scanSeal");
-    const plateStatusEl = document.getElementById("plateStatus");
-    const stage2El      = document.getElementById("stage2");
+    const qtyEl        = document.getElementById("qty");
+    const totalEl      = document.getElementById("total");
+    const connectBtn   = document.getElementById("connect");
+    const mintBtn      = document.getElementById("mint");
+    const scanStatusEl = document.getElementById("scanStatus");
+    const riskScoreEl  = document.getElementById("riskScore");
+    const classValueEl = document.getElementById("classValue");
+    const walletAgeEl  = document.getElementById("walletAge");
+    const firstSeenEl  = document.getElementById("firstSeen");
+    const interactEl   = document.getElementById("interactions");
+    const exposureEl   = document.getElementById("exposureIndex");
+    const scanSealEl   = document.getElementById("scanSeal");
+    const stage2El     = document.getElementById("stage2");
 
-    /* ── Info popup toggle ── */
+    /* ── Info popup ── */
     const infoBtn   = document.getElementById("infoBtn");
     const infoPopup = document.getElementById("infoPopup");
 
@@ -1497,12 +1498,10 @@
       infoPopup.hidden = open;
       infoBtn.setAttribute("aria-expanded", String(!open));
     });
-
     document.addEventListener("click", () => {
       infoPopup.hidden = true;
       infoBtn.setAttribute("aria-expanded", "false");
     });
-
     infoPopup.addEventListener("click", (e) => e.stopPropagation());
 
     /* ── Quantity stepper ── */
@@ -1520,65 +1519,152 @@
       btn.addEventListener("click", () => { qty = Number(btn.dataset.qty); renderQty(); });
     });
 
-    /* ── Wallet connect (mock) ── */
-    const WALLETS = {
-      connected: {
-        label:        "0x8C4...19AF",
-        riskScore:    "68",
-        riskClass:    "Ancient Exposure",
-        riskColor:    "var(--red)",
-        walletAge:    "1,942 days",
-        firstSeen:    "2021-02-07",
-        interactions: "214 contracts",
-        exposureIdx:  "0.68",
-        curveDotX: 138, curveDotY: 32, indicatorX: 138,
-        status: "Wallet Scanned · Ready to Mint",
-      },
-      disconnected: {
-        label:        "Connect Wallet",
-        riskScore:    "—",
-        riskClass:    "Not Scanned",
-        riskColor:    "var(--muted)",
-        walletAge:    "—",
-        firstSeen:    "—",
-        interactions: "—",
-        exposureIdx:  "—",
-        curveDotX: 84, curveDotY: 66, indicatorX: 84,
-        status: "Awaiting Wallet",
-      },
-    };
+    /* ── Exposure score (mock — replace with Etherscan API later) ── */
+    function calcExposure(address) {
+      // Deterministic mock based on address until real API is wired
+      const seed = parseInt(address.slice(2, 10), 16);
+      const age  = 180 + (seed % 1800);          // 180–1980 days
+      const idx  = ((seed % 100) / 100).toFixed(2);
+      const risk = Math.round(20 + (seed % 60));  // 20–80%
 
-    function applyWallet(state) {
-      const w = WALLETS[state];
-      connectBtn.textContent = w.label;
-      connectBtn.classList.toggle("connected", state === "connected");
-      connectBtn.setAttribute("aria-pressed", String(state === "connected"));
+      const classes = [
+        { min: 0,  max: 30, label: "Low Exposure",     color: "var(--teal)" },
+        { min: 30, max: 55, label: "Moderate Risk",    color: "var(--amber)" },
+        { min: 55, max: 75, label: "High Exposure",    color: "var(--red)" },
+        { min: 75, max: 100,label: "Ancient Exposure", color: "var(--purple)" },
+      ];
+      const cls = classes.find(c => risk >= c.min && risk < c.max) || classes[3];
 
-      riskScoreEl.innerHTML    = state === "connected" ? w.riskScore + "<sup>%</sup>" : "—";
-      classValueEl.textContent = w.riskClass;
-      classValueEl.style.color = w.riskColor;
-      walletAgeEl.textContent  = w.walletAge;
-      firstSeenEl.textContent  = w.firstSeen;
-      interactEl.textContent   = w.interactions;
-      exposureEl.textContent   = w.exposureIdx;
+      const firstDate = new Date(Date.now() - age * 86400000)
+        .toISOString().slice(0, 10);
 
-      if (appState === "idle") scanStatusEl.textContent = w.status;
+      return { age, idx, risk, cls, firstDate };
+    }
 
-      const dot = document.getElementById("curveDot");
-      const ind = document.getElementById("curveIndicator");
-      dot.setAttribute("cx", w.curveDotX);
-      dot.setAttribute("cy", w.curveDotY);
-      ind.setAttribute("x1", w.indicatorX);
-      ind.setAttribute("x2", w.indicatorX);
+    function applyExposure(address) {
+      const { age, idx, risk, cls, firstDate } = calcExposure(address);
 
-      scanSealEl.classList.toggle("scanning", state === "connected");
+      riskScoreEl.innerHTML    = `${risk}<sup>%</sup>`;
+      classValueEl.textContent = cls.label;
+      classValueEl.style.color = cls.color;
+      walletAgeEl.textContent  = `${age.toLocaleString()} days`;
+      firstSeenEl.textContent  = firstDate;
+      interactEl.textContent   = `${20 + (parseInt(address.slice(4,8),16) % 200)} contracts`;
+      exposureEl.textContent   = idx;
+
+      // Curve dot position mapped to risk %
+      const x = Math.round(10 + (risk / 100) * 160);
+      const y = Math.round(80 - (risk / 100) * 60);
+      document.getElementById("curveDot").setAttribute("cx", x);
+      document.getElementById("curveDot").setAttribute("cy", y);
+      document.getElementById("curveIndicator").setAttribute("x1", x);
+      document.getElementById("curveIndicator").setAttribute("x2", x);
+
+      scanSealEl.classList.add("scanning");
+      scanStatusEl.style.color = "";
+      scanStatusEl.textContent = "Wallet Scanned · Ready to Mint";
+    }
+
+    function resetExposure() {
+      riskScoreEl.innerHTML    = "—";
+      classValueEl.textContent = "Not Scanned";
+      classValueEl.style.color = "var(--muted)";
+      walletAgeEl.textContent  = "—";
+      firstSeenEl.textContent  = "—";
+      interactEl.textContent   = "—";
+      exposureEl.textContent   = "—";
+      scanSealEl.classList.remove("scanning");
+      scanStatusEl.textContent = "Awaiting Wallet";
+    }
+
+    function shortAddr(addr) {
+      return addr.slice(0, 6) + "..." + addr.slice(-4);
+    }
+
+    /* ── Wallet connect ── */
+    async function connectWallet() {
+      if (!window.ethereum) {
+        alert("MetaMask not detected. Please install MetaMask to continue.");
+        return;
+      }
+
+      try {
+        connectBtn.textContent = "Connecting...";
+        connectBtn.disabled = true;
+
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        account = accounts[0];
+
+        // Check / switch to Mainnet
+        const chainId = await window.ethereum.request({ method: "eth_chainId" });
+        if (chainId !== CHAIN_ID) {
+          try {
+            await window.ethereum.request({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: CHAIN_ID }],
+            });
+          } catch {
+            scanStatusEl.textContent = "Switch to Ethereum Mainnet";
+            scanStatusEl.style.color = "var(--red)";
+            connectBtn.textContent = "Connect Wallet";
+            connectBtn.disabled = false;
+            return;
+          }
+        }
+
+        connected = true;
+        connectBtn.textContent = shortAddr(account);
+        connectBtn.classList.add("connected");
+        connectBtn.setAttribute("aria-pressed", "true");
+        connectBtn.disabled = false;
+
+        applyExposure(account);
+
+      } catch (err) {
+        connectBtn.textContent = "Connect Wallet";
+        connectBtn.disabled = false;
+        if (err.code !== 4001) console.error(err);
+      }
+    }
+
+    function disconnectWallet() {
+      connected = false;
+      account   = null;
+      connectBtn.textContent = "Connect Wallet";
+      connectBtn.classList.remove("connected");
+      connectBtn.setAttribute("aria-pressed", "false");
+      resetExposure();
     }
 
     connectBtn.addEventListener("click", () => {
-      connected = !connected;
-      scanSealEl.classList.add("scanning");
-      setTimeout(() => applyWallet(connected ? "connected" : "disconnected"), 500);
+      if (connected) disconnectWallet();
+      else connectWallet();
     });
+
+    // Listen for account / chain changes
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", (accounts) => {
+        if (!accounts.length) { disconnectWallet(); return; }
+        account = accounts[0];
+        connectBtn.textContent = shortAddr(account);
+        applyExposure(account);
+      });
+      window.ethereum.on("chainChanged", () => window.location.reload());
+    }
+
+    // Auto-reconnect if previously connected
+    if (window.ethereum) {
+      window.ethereum.request({ method: "eth_accounts" }).then((accounts) => {
+        if (accounts.length) {
+          account   = accounts[0];
+          connected = true;
+          connectBtn.textContent = shortAddr(account);
+          connectBtn.classList.add("connected");
+          connectBtn.setAttribute("aria-pressed", "true");
+          applyExposure(account);
+        }
+      });
+    }
 
     /* ── Mint ── */
     mintBtn.addEventListener("click", () => {
@@ -1587,20 +1673,17 @@
         scanStatusEl.style.color = "var(--red)";
         return;
       }
-
-      plateStatusEl.textContent = "Sealed";
       stage2El.classList.add("active");
-      scanStatusEl.style.color  = "";
-      scanStatusEl.textContent  = "Sealed · Awaiting team reveal";
-
-      mintBtn.disabled     = true;
-      mintBtn.textContent  = "Sample Sealed";
-      mintBtn.style.background   = "linear-gradient(175deg, #2a5250, #162f30)";
-      mintBtn.style.boxShadow    = "none";
-      mintBtn.style.cursor       = "default";
+      scanStatusEl.style.color = "";
+      scanStatusEl.textContent = "Sealed · Awaiting team reveal";
+      mintBtn.disabled   = true;
+      mintBtn.textContent = "Sample Sealed";
+      mintBtn.style.background = "linear-gradient(175deg, #2a5250, #162f30)";
+      mintBtn.style.boxShadow  = "none";
+      mintBtn.style.cursor     = "default";
     });
 
-    /* ── Animate probability bars on load ── */
+    /* ── Animate probability bars ── */
     setTimeout(() => {
       document.querySelectorAll(".bar-fill").forEach(fill => {
         requestAnimationFrame(() => { fill.style.width = fill.dataset.w + "%"; });
