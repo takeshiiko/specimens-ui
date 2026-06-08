@@ -1543,40 +1543,40 @@
         const API_KEY = "GZQQRN33JBUX6XKZI8XWWV9PHJF3RIR4JA";
         const base    = "https://api.etherscan.io/api";
 
-        // First tx (wallet age) + total tx count in parallel
-        const [txRes, normalRes] = await Promise.all([
-          fetch(`${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1&sort=asc&apikey=${API_KEY}`),
-          fetch(`${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1&sort=desc&apikey=${API_KEY}`),
-        ]);
+        // 1 — First ever tx (wallet age)
+        const firstTxUrl = `${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1&sort=asc&apikey=${API_KEY}`;
+        const firstTxRes  = await fetch(firstTxUrl);
+        const firstTxData = await firstTxRes.json();
 
-        const txData     = await txRes.json();
-        const normalData = await normalRes.json();
-
-        // Wallet age
         let ageDays   = 0;
-        let firstDate = "—";
-        if (txData.result && txData.result.length > 0) {
-          const firstTs = parseInt(txData.result[0].timeStamp);
+        let firstDate = "New wallet";
+        if (firstTxData.status === "1" && firstTxData.result?.length > 0) {
+          const firstTs = parseInt(firstTxData.result[0].timeStamp);
           ageDays   = Math.floor((Date.now() / 1000 - firstTs) / 86400);
           firstDate = new Date(firstTs * 1000).toISOString().slice(0, 10);
         }
 
-        // Tx count → unique contracts interacted
-        const countRes  = await fetch(`${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10000&sort=asc&apikey=${API_KEY}`);
-        const countData = await countRes.json();
-        const txList    = countData.result || [];
+        // 2 — Nonce = total outgoing tx count (single lightweight call)
+        const nonceUrl  = `${base}?module=proxy&action=eth_getTransactionCount&address=${address}&tag=latest&apikey=${API_KEY}`;
+        const nonceRes  = await fetch(nonceUrl);
+        const nonceData = await nonceRes.json();
+        const txCount   = nonceData.result ? parseInt(nonceData.result, 16) : 0;
+
+        // 3 — Last 100 txs for unique contract count
+        const recentUrl  = `${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=100&sort=desc&apikey=${API_KEY}`;
+        const recentRes  = await fetch(recentUrl);
+        const recentData = await recentRes.json();
+        const txList     = recentData.status === "1" ? recentData.result : [];
         const uniqueContracts = new Set(
-          txList.filter(tx => tx.to && tx.to !== "").map(tx => tx.to.toLowerCase())
+          txList.filter(tx => tx.to && tx.to !== address.toLowerCase()).map(tx => tx.to.toLowerCase())
         ).size;
 
-        // Exposure index: normalized 0–1 based on age + contract diversity
-        const ageScore      = Math.min(ageDays / 1825, 1);      // max 5 years
-        const contractScore = Math.min(uniqueContracts / 500, 1); // max 500
-        const exposureIdx   = ((ageScore * 0.6 + contractScore * 0.4)).toFixed(2);
-
-        // Risk %: higher exposure = higher infection compatibility
-        const risk = Math.round(parseFloat(exposureIdx) * 100);
-        const cls  = EXPOSURE_CLASSES.find(c => risk >= c.min && risk < c.max) || EXPOSURE_CLASSES[3];
+        // Exposure index
+        const ageScore      = Math.min(ageDays / 1825, 1);
+        const contractScore = Math.min(uniqueContracts / 100, 1);
+        const exposureIdx   = (ageScore * 0.6 + contractScore * 0.4).toFixed(2);
+        const risk          = Math.round(parseFloat(exposureIdx) * 100);
+        const cls           = EXPOSURE_CLASSES.find(c => risk >= c.min && risk < c.max) || EXPOSURE_CLASSES[3];
 
         // Update UI
         riskScoreEl.innerHTML    = `${risk}<sup>%</sup>`;
@@ -1584,25 +1584,25 @@
         classValueEl.style.color = cls.color;
         walletAgeEl.textContent  = ageDays > 0 ? `${ageDays.toLocaleString()} days` : "New wallet";
         firstSeenEl.textContent  = firstDate;
-        interactEl.textContent   = `${uniqueContracts} contracts`;
+        interactEl.textContent   = `${txCount.toLocaleString()} txs · ${uniqueContracts} contracts`;
         exposureEl.textContent   = exposureIdx;
 
-        // Curve dot
-        const x = Math.round(10 + (risk / 100) * 160);
-        const y = Math.round(80 - (risk / 100) * 60);
-        document.getElementById("curveDot").setAttribute("cx", x);
-        document.getElementById("curveDot").setAttribute("cy", y);
-        document.getElementById("curveIndicator").setAttribute("x1", x);
-        document.getElementById("curveIndicator").setAttribute("x2", x);
+        const dotX = Math.round(10 + (risk / 100) * 160);
+        const dotY = Math.round(80 - (risk / 100) * 60);
+        document.getElementById("curveDot").setAttribute("cx", dotX);
+        document.getElementById("curveDot").setAttribute("cy", dotY);
+        document.getElementById("curveIndicator").setAttribute("x1", dotX);
+        document.getElementById("curveIndicator").setAttribute("x2", dotX);
 
         scanStatusEl.textContent = "Wallet Scanned · Ready to Mint";
         scanStatusEl.style.color = "";
 
       } catch (err) {
-        console.error("Etherscan error:", err);
+        console.error("Scan error:", err);
         classValueEl.textContent = "Scan Failed";
         classValueEl.style.color = "var(--red)";
-        scanStatusEl.textContent = "Scan error — retry";
+        scanStatusEl.textContent = "Scan error — check console";
+        riskScoreEl.innerHTML    = "—";
       }
     }
 
