@@ -1481,7 +1481,12 @@
                 <div class="risk-number" id="riskScore" aria-live="polite">36<sup>%</sup></div>
               </div>
               <div class="curve-wrap" aria-label="Exposure curve chart" role="img">
-                <svg class="curve-svg" viewBox="0 0 180 88" preserveAspectRatio="none">
+                <svg class="curve-svg" id="curveSvg" viewBox="0 0 180 88" preserveAspectRatio="none">
+                  <defs>
+                    <clipPath id="curveClip">
+                      <rect x="0" y="0" width="180" height="88"/>
+                    </clipPath>
+                  </defs>
                   <!-- Grid lines -->
                   <line x1="0" y1="22" x2="180" y2="22" stroke="rgba(28,37,37,0.08)" stroke-width="1"/>
                   <line x1="0" y1="44" x2="180" y2="44" stroke="rgba(28,37,37,0.08)" stroke-width="1"/>
@@ -1491,7 +1496,7 @@
                   <!-- Area fill -->
                   <path id="curveArea"
                     d="M0,68 C10,60 18,54 28,62 S44,38 60,52 S72,60 84,66 S102,28 114,44 S132,56 150,62 L180,50 L180,88 L0,88 Z"
-                    fill="rgba(38,123,120,0.08)"/>
+                    fill="rgba(38,123,120,0.08)" clip-path="url(#curveClip)"/>
                   <!-- Curve line -->
                   <path id="curveLine"
                     d="M0,68 C10,60 18,54 28,62 S44,38 60,52 S72,60 84,66 S102,28 114,44 S132,56 150,62 L180,50"
@@ -1754,12 +1759,9 @@
         interactEl.textContent   = `${txCount.toLocaleString()} txs · ${uniqueContracts} contracts`;
         exposureEl.textContent   = exposureIdx;
 
+        // Animate dot to new position
         const dotX = Math.round(10 + (risk / 100) * 160);
-        const dotY = Math.round(80 - (risk / 100) * 60);
-        document.getElementById("curveDot").setAttribute("cx", dotX);
-        document.getElementById("curveDot").setAttribute("cy", dotY);
-        document.getElementById("curveIndicator").setAttribute("x1", dotX);
-        document.getElementById("curveIndicator").setAttribute("x2", dotX);
+        animateDotTo(dotX);
 
         scanStatusEl.textContent = "Wallet Scanned · Ready to Mint";
         scanStatusEl.style.color = "";
@@ -1978,6 +1980,76 @@
         requestAnimationFrame(() => { fill.style.width = fill.dataset.w + "%"; });
       });
     }, 300);
+
+    /* ── Curve wave animation ── */
+    const curveLineEl = document.getElementById("curveLine");
+    const curveAreaEl = document.getElementById("curveArea");
+    const curveDotEl  = document.getElementById("curveDot");
+    const curveIndEl  = document.getElementById("curveIndicator");
+
+    // Base Y anchors for the wave (10 control points across 0–180)
+    const baseY = [68, 60, 54, 62, 38, 52, 60, 66, 28, 44, 56, 62, 50];
+
+    let dotTargetX = 84;
+    let dotCurrentX = 84;
+
+    function buildPath(yArr, offsetY = 0) {
+      const pts = yArr.map((y, i) => Math.max(8, Math.min(82, y + offsetY)));
+      return `M0,${pts[0]} C10,${pts[1]} 18,${pts[2]} 28,${pts[3]} S44,${pts[4]} 60,${pts[5]} S72,${pts[6]} 84,${pts[7]} S102,${pts[8]} 114,${pts[9]} S132,${pts[10]} 150,${pts[11]} L180,${pts[12]}`;
+    }
+
+    function buildArea(yArr, offsetY = 0) {
+      return buildPath(yArr, offsetY) + " L180,88 L0,88 Z";
+    }
+
+    function getDotY(x) {
+      // Interpolate Y from baseY based on x position (0–180)
+      const t = x / 180 * (baseY.length - 1);
+      const i = Math.floor(t);
+      const frac = t - i;
+      const y1 = baseY[Math.min(i, baseY.length - 1)];
+      const y2 = baseY[Math.min(i + 1, baseY.length - 1)];
+      return y1 + (y2 - y1) * frac;
+    }
+
+    let animT = 0;
+    function animateCurve() {
+      animT += 0.012;
+
+      // Gentle organic wave — each anchor drifts independently
+      const drifted = baseY.map((y, i) => {
+        const slow = Math.sin(animT * 0.7 + i * 0.9) * 3.5;
+        const fast = Math.cos(animT * 1.3 + i * 1.4) * 1.8;
+        return y + slow + fast;
+      });
+
+      curveLineEl.setAttribute("d", buildPath(drifted));
+      curveAreaEl.setAttribute("d", buildArea(drifted));
+
+      // Smooth dot X transition
+      dotCurrentX += (dotTargetX - dotCurrentX) * 0.06;
+      const dotY = drifted[0] + (drifted[drifted.length - 1] - drifted[0]) * (dotCurrentX / 180);
+      // Use a smooth interpolation for dot Y based on nearby anchors
+      const tPos  = dotCurrentX / 180 * (drifted.length - 1);
+      const iPos  = Math.floor(tPos);
+      const fPos  = tPos - iPos;
+      const dY1   = drifted[Math.min(iPos, drifted.length - 1)];
+      const dY2   = drifted[Math.min(iPos + 1, drifted.length - 1)];
+      const interpY = dY1 + (dY2 - dY1) * fPos;
+
+      curveDotEl.setAttribute("cx", dotCurrentX.toFixed(1));
+      curveDotEl.setAttribute("cy", interpY.toFixed(1));
+      curveIndEl.setAttribute("x1", dotCurrentX.toFixed(1));
+      curveIndEl.setAttribute("x2", dotCurrentX.toFixed(1));
+
+      requestAnimationFrame(animateCurve);
+    }
+
+    function animateDotTo(targetX) {
+      dotTargetX = targetX;
+    }
+
+    requestAnimationFrame(animateCurve);
   </script>
 </body>
 </html>
