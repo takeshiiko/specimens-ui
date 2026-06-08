@@ -1982,60 +1982,94 @@
     }, 300);
 
     /* ── Curve wave animation ── */
-    const curveLineEl = document.getElementById("curveLine");
-    const curveAreaEl = document.getElementById("curveArea");
-    const curveDotEl  = document.getElementById("curveDot");
-    const curveIndEl  = document.getElementById("curveIndicator");
+    const curveLineEl  = document.getElementById("curveLine");
+    const curveAreaEl  = document.getElementById("curveArea");
+    const curveDotEl   = document.getElementById("curveDot");
+    const curveIndEl   = document.getElementById("curveIndicator");
+    const curveSvgEl   = document.getElementById("curveSvg");
 
-    // Base Y anchors for the wave (10 control points across 0–180)
-    const baseY = [68, 60, 54, 62, 38, 52, 60, 66, 28, 44, 56, 62, 50];
+    // Inject secondary signal lines into SVG
+    const sigB = document.createElementNS("http://www.w3.org/2000/svg","path");
+    sigB.setAttribute("fill","none");
+    sigB.setAttribute("stroke","rgba(38,123,120,0.22)");
+    sigB.setAttribute("stroke-width","1");
+    sigB.setAttribute("stroke-linecap","round");
+    curveSvgEl.insertBefore(sigB, curveLineEl);
+
+    const sigC = document.createElementNS("http://www.w3.org/2000/svg","path");
+    sigC.setAttribute("fill","none");
+    sigC.setAttribute("stroke","rgba(107,74,130,0.18)");
+    sigC.setAttribute("stroke-width","1");
+    sigC.setAttribute("stroke-linecap","round");
+    curveSvgEl.insertBefore(sigC, curveLineEl);
+
+    // 24 sample points across width 0–180
+    const N = 24;
+    const xs = Array.from({length: N}, (_, i) => i * 180 / (N - 1));
+
+    // Noise seeds per point
+    const seeds = Array.from({length: N}, () => Math.random() * Math.PI * 2);
+    const seeds2 = Array.from({length: N}, () => Math.random() * Math.PI * 2);
+    const seeds3 = Array.from({length: N}, () => Math.random() * Math.PI * 2);
+
+    function sampleY(i, t, baseAmp, freqs, amps, offset = 44) {
+      let y = offset;
+      freqs.forEach((f, k) => { y += Math.sin(t * f + seeds[i] + k * 1.3) * amps[k]; });
+      return Math.max(6, Math.min(82, y));
+    }
+
+    function pointsToPath(pts) {
+      if (pts.length < 2) return "";
+      let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+      for (let i = 1; i < pts.length - 1; i++) {
+        const cpx = (pts[i][0] + pts[i-1][0]) / 2;
+        const cpy = (pts[i][1] + pts[i-1][1]) / 2;
+        d += ` Q${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)} ${((pts[i][0]+pts[i+1][0])/2).toFixed(1)},${((pts[i][1]+pts[i+1][1])/2).toFixed(1)}`;
+      }
+      d += ` L${pts[pts.length-1][0].toFixed(1)},${pts[pts.length-1][1].toFixed(1)}`;
+      return d;
+    }
 
     let dotTargetX = 84;
     let dotCurrentX = 84;
-
-    function buildPath(yArr, offsetY = 0) {
-      const pts = yArr.map((y, i) => Math.max(8, Math.min(82, y + offsetY)));
-      return `M0,${pts[0]} C10,${pts[1]} 18,${pts[2]} 28,${pts[3]} S44,${pts[4]} 60,${pts[5]} S72,${pts[6]} 84,${pts[7]} S102,${pts[8]} 114,${pts[9]} S132,${pts[10]} 150,${pts[11]} L180,${pts[12]}`;
-    }
-
-    function buildArea(yArr, offsetY = 0) {
-      return buildPath(yArr, offsetY) + " L180,88 L0,88 Z";
-    }
-
-    function getDotY(x) {
-      // Interpolate Y from baseY based on x position (0–180)
-      const t = x / 180 * (baseY.length - 1);
-      const i = Math.floor(t);
-      const frac = t - i;
-      const y1 = baseY[Math.min(i, baseY.length - 1)];
-      const y2 = baseY[Math.min(i + 1, baseY.length - 1)];
-      return y1 + (y2 - y1) * frac;
-    }
-
     let animT = 0;
-    function animateCurve() {
-      animT += 0.012;
 
-      // Gentle organic wave — each anchor drifts independently
-      const drifted = baseY.map((y, i) => {
-        const slow = Math.sin(animT * 0.7 + i * 0.9) * 3.5;
-        const fast = Math.cos(animT * 1.3 + i * 1.4) * 1.8;
-        return y + slow + fast;
+    function animateCurve() {
+      animT += 0.008;
+
+      // Primary signal — main exposure curve, complex multi-freq
+      const ptsA = xs.map((x, i) => [x, sampleY(i, animT,
+        1, [0.5, 1.1, 2.3, 0.3], [8, 5, 3, 6], 44)]);
+
+      // Secondary signal B — faster, noisier
+      const ptsB = xs.map((x, i) => {
+        let y = 52;
+        y += Math.sin(animT * 1.8 + seeds2[i]) * 6;
+        y += Math.cos(animT * 3.1 + seeds2[i] * 1.7) * 3;
+        y += Math.sin(animT * 0.4 + i * 0.5) * 9;
+        return [x, Math.max(6, Math.min(82, y))];
       });
 
-      curveLineEl.setAttribute("d", buildPath(drifted));
-      curveAreaEl.setAttribute("d", buildArea(drifted));
+      // Signal C — slow drift, low amplitude
+      const ptsC = xs.map((x, i) => {
+        let y = 38;
+        y += Math.sin(animT * 0.3 + seeds3[i] + i * 0.3) * 12;
+        y += Math.cos(animT * 0.9 + i * 0.7) * 5;
+        return [x, Math.max(6, Math.min(82, y))];
+      });
 
-      // Smooth dot X transition
-      dotCurrentX += (dotTargetX - dotCurrentX) * 0.06;
-      const dotY = drifted[0] + (drifted[drifted.length - 1] - drifted[0]) * (dotCurrentX / 180);
-      // Use a smooth interpolation for dot Y based on nearby anchors
-      const tPos  = dotCurrentX / 180 * (drifted.length - 1);
-      const iPos  = Math.floor(tPos);
-      const fPos  = tPos - iPos;
-      const dY1   = drifted[Math.min(iPos, drifted.length - 1)];
-      const dY2   = drifted[Math.min(iPos + 1, drifted.length - 1)];
-      const interpY = dY1 + (dY2 - dY1) * fPos;
+      const pathA = pointsToPath(ptsA);
+      curveLineEl.setAttribute("d", pathA);
+      curveAreaEl.setAttribute("d", pathA + ` L180,88 L0,88 Z`);
+      sigB.setAttribute("d", pointsToPath(ptsB));
+      sigC.setAttribute("d", pointsToPath(ptsC));
+
+      // Dot smooth approach
+      dotCurrentX += (dotTargetX - dotCurrentX) * 0.05;
+      const tPos = dotCurrentX / 180 * (N - 1);
+      const iPos = Math.min(Math.floor(tPos), N - 2);
+      const fPos = tPos - iPos;
+      const interpY = ptsA[iPos][1] + (ptsA[iPos+1][1] - ptsA[iPos][1]) * fPos;
 
       curveDotEl.setAttribute("cx", dotCurrentX.toFixed(1));
       curveDotEl.setAttribute("cy", interpY.toFixed(1));
@@ -2045,9 +2079,7 @@
       requestAnimationFrame(animateCurve);
     }
 
-    function animateDotTo(targetX) {
-      dotTargetX = targetX;
-    }
+    function animateDotTo(targetX) { dotTargetX = targetX; }
 
     requestAnimationFrame(animateCurve);
   </script>
