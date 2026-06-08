@@ -1704,10 +1704,10 @@
 
       try {
         const API_KEY = "GZQQRN33JBUX6XKZI8XWWV9PHJF3RIR4JA";
-        const base    = "https://api.etherscan.io/api";
+        const base    = "https://api.etherscan.io/v2/api?chainid=1";
 
         // 1 — First ever tx (wallet age)
-        const firstTxUrl = `${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1&sort=asc&apikey=${API_KEY}`;
+        const firstTxUrl = `${base}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1&sort=asc&apikey=${API_KEY}`;
         const firstTxRes  = await fetch(firstTxUrl);
         const firstTxData = await firstTxRes.json();
 
@@ -1720,13 +1720,13 @@
         }
 
         // 2 — Nonce = total outgoing tx count (single lightweight call)
-        const nonceUrl  = `${base}?module=proxy&action=eth_getTransactionCount&address=${address}&tag=latest&apikey=${API_KEY}`;
+        const nonceUrl  = `${base}&module=proxy&action=eth_getTransactionCount&address=${address}&tag=latest&apikey=${API_KEY}`;
         const nonceRes  = await fetch(nonceUrl);
         const nonceData = await nonceRes.json();
         const txCount   = nonceData.result ? parseInt(nonceData.result, 16) : 0;
 
         // 3 — Last 100 txs for unique contract count
-        const recentUrl  = `${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=100&sort=desc&apikey=${API_KEY}`;
+        const recentUrl  = `${base}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=100&sort=desc&apikey=${API_KEY}`;
         const recentRes  = await fetch(recentUrl);
         const recentData = await recentRes.json();
         const txList     = recentData.status === "1" ? recentData.result : [];
