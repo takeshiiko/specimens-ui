@@ -1719,19 +1719,23 @@
           firstDate = new Date(firstTs * 1000).toISOString().slice(0, 10);
         }
 
-        // 2 — Nonce = total outgoing tx count (single lightweight call)
+        // 2 — Nonce = total outgoing tx count
         const nonceUrl  = `${base}&module=proxy&action=eth_getTransactionCount&address=${address}&tag=latest&apikey=${API_KEY}`;
         const nonceRes  = await fetch(nonceUrl);
         const nonceData = await nonceRes.json();
-        const txCount   = nonceData.result ? parseInt(nonceData.result, 16) : 0;
+        const rawNonce  = nonceData.result ?? nonceData.result;
+        const txCount   = rawNonce ? (parseInt(rawNonce, 16) || 0) : 0;
 
         // 3 — Last 100 txs for unique contract count
         const recentUrl  = `${base}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=100&sort=desc&apikey=${API_KEY}`;
         const recentRes  = await fetch(recentUrl);
         const recentData = await recentRes.json();
-        const txList     = recentData.status === "1" ? recentData.result : [];
+        const txList     = (recentData.status === "1" || recentData.status === 1) ? recentData.result : [];
+        const addrLower  = address.toLowerCase();
         const uniqueContracts = new Set(
-          txList.filter(tx => tx.to && tx.to !== address.toLowerCase()).map(tx => tx.to.toLowerCase())
+          txList
+            .filter(tx => tx.to && tx.to.toLowerCase() !== addrLower && tx.from && tx.from.toLowerCase() === addrLower)
+            .map(tx => tx.to.toLowerCase())
         ).size;
 
         // Exposure index
