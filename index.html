@@ -817,7 +817,7 @@
       top: calc(100% + 10px);
       right: 0;
       z-index: 100;
-      width: 320px;
+      width: 400px;
       border: 1px solid var(--rule-strong);
       background: var(--paper-3);
       box-shadow: var(--shadow-md);
@@ -872,14 +872,34 @@
       margin-bottom: 8px;
     }
 
-    .info-popup-tiers {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 12px;
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
       font-family: var(--mono);
       font-size: 11px;
-      letter-spacing: 0.5px;
     }
+
+    .info-table th {
+      text-align: left;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 500;
+      padding: 0 8px 6px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .info-table td {
+      padding: 6px 8px 6px 0;
+      border-bottom: 1px solid var(--rule);
+      color: var(--ink);
+      vertical-align: top;
+      line-height: 1.4;
+    }
+
+    .info-table tr:last-child td { border-bottom: 0; }
+    .info-table td:first-child { white-space: nowrap; font-weight: 500; }
+    .info-table td:nth-child(2) { white-space: nowrap; color: var(--muted); padding-right: 12px; }
 
     .info-popup-note {
       padding: 10px 16px 14px;
@@ -1178,17 +1198,42 @@
             <div class="info-popup-divider"></div>
             <div class="info-popup-section">
               <div class="info-popup-label">Rarity — Common → Rare</div>
-              <div class="info-popup-tiers">
-                <span style="color:var(--muted)">Infected 65%</span>
-                <span style="color:var(--amber)">Dormant 20%</span>
-                <span style="color:var(--red)">Crown Strain 7%</span>
-                <span style="color:var(--purple)">Symbiotic 5%</span>
-                <span style="color:var(--teal)">Clean 3%</span>
-              </div>
+              <table class="info-table">
+                <thead>
+                  <tr><th>Class</th><th>%</th><th>Mechanic</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="color:var(--muted)">Infected</td>
+                    <td>65%</td>
+                    <td>Base, immutable</td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--amber)">Dormant</td>
+                    <td>20%</td>
+                    <td>Activates if Crown Strain is in same wallet</td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--red)">Crown Strain</td>
+                    <td>7%</td>
+                    <td>Activates Dormant tokens, limited spread rights</td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--purple)">Symbiotic</td>
+                    <td>5%</td>
+                    <td>Immune, stable, utility token</td>
+                  </tr>
+                  <tr>
+                    <td style="color:var(--teal)">Clean</td>
+                    <td>3%</td>
+                    <td>Rarest — degrades to Infected if not transferred within 24h</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
             <div class="info-popup-divider"></div>
             <div class="info-popup-note">
-              Clean tokens degrade to Infected if not transferred within 24h. Wallet exposure shifts reveal probabilities — not a guarantee.
+              Wallet exposure shifts reveal probabilities — not a guarantee.
             </div>
           </div>
         </div>
