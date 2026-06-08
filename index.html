@@ -807,6 +807,99 @@
       line-height: 1.55;
     }
 
+    /* ─── Wallet picker modal ─── */
+    .wm-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(20, 28, 26, 0.55);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .wm-overlay[hidden] { display: none; }
+
+    .wm-box {
+      background: var(--paper-3);
+      border: 1px solid var(--rule-strong);
+      box-shadow: var(--shadow-lg);
+      width: 340px;
+      max-width: calc(100vw - 32px);
+      animation: fadeIn 0.15s ease both;
+    }
+
+    .wm-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 18px 14px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .wm-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .wm-close {
+      border: none; background: none;
+      color: var(--muted); font-size: 14px;
+      cursor: pointer; padding: 2px 6px;
+      line-height: 1;
+    }
+    .wm-close:hover { color: var(--ink); }
+
+    .wm-list {
+      padding: 10px 0;
+    }
+
+    .wm-item {
+      display: flex; align-items: center; gap: 14px;
+      width: 100%; border: none; background: none;
+      padding: 12px 18px;
+      cursor: pointer; text-align: left;
+      transition: background 0.1s;
+    }
+    .wm-item:hover { background: var(--paper-2); }
+
+    .wm-item-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      object-fit: contain;
+      flex-shrink: 0;
+      background: var(--paper-2);
+    }
+
+    .wm-item-icon-placeholder {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--paper-2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+
+    .wm-item-name {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--ink);
+    }
+
+    .wm-empty {
+      padding: 18px 18px 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .wm-footer {
+      padding: 10px 18px 16px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      border-top: 1px solid var(--rule);
+      text-align: center;
+    }
+    .wm-footer a { color: var(--teal); text-decoration: none; }
+    .wm-footer a:hover { text-decoration: underline; }
+
     /* ─── Wallet dropdown ─── */
     .wallet-wrap {
       position: relative;
@@ -1294,6 +1387,20 @@
       </section>
     </header>
 
+    <!-- ─── Wallet picker modal ─── -->
+    <div class="wm-overlay" id="walletModal" hidden>
+      <div class="wm-box" role="dialog" aria-modal="true" aria-label="Select wallet">
+        <div class="wm-head">
+          <span class="wm-title">Select Wallet</span>
+          <button class="wm-close" id="walletModalClose" aria-label="Close">✕</button>
+        </div>
+        <div class="wm-list" id="walletList">
+          <!-- injected by JS -->
+        </div>
+        <div class="wm-footer">No wallet detected? <a href="https://metamask.io" target="_blank" rel="noopener">Install MetaMask</a></div>
+      </div>
+    </div>
+
     <!-- ─── Main layout ─── -->
     <div class="layout">
 
@@ -1678,25 +1785,81 @@
       return addr.slice(0, 6) + "..." + addr.slice(-4);
     }
 
-    /* ── Wallet connect ── */
-    async function connectWallet() {
-      if (!window.ethereum) {
-        alert("MetaMask not detected. Please install MetaMask to continue.");
-        return;
+    /* ── EIP-6963 multi-wallet discovery ── */
+    const discoveredProviders = new Map(); // rdns → { info, provider }
+
+    window.addEventListener("eip6963:announceProvider", (e) => {
+      const { info, provider } = e.detail;
+      discoveredProviders.set(info.rdns, { info, provider });
+    });
+    window.dispatchEvent(new Event("eip6963:requestProvider"));
+
+    /* ── Wallet picker modal ── */
+    const walletModal      = document.getElementById("walletModal");
+    const walletList       = document.getElementById("walletList");
+    const walletModalClose = document.getElementById("walletModalClose");
+
+    function openWalletModal() {
+      walletList.innerHTML = "";
+
+      if (discoveredProviders.size === 0) {
+        // Fallback: try legacy window.ethereum
+        if (window.ethereum) {
+          const btn = document.createElement("button");
+          btn.className = "wm-item";
+          btn.innerHTML = `<div class="wm-item-icon-placeholder">🦊</div><span class="wm-item-name">MetaMask</span>`;
+          btn.addEventListener("click", () => {
+            closeWalletModal();
+            connectWithProvider(window.ethereum);
+          });
+          walletList.appendChild(btn);
+        } else {
+          walletList.innerHTML = `<div class="wm-empty">No wallet detected.</div>`;
+        }
+      } else {
+        discoveredProviders.forEach(({ info, provider }) => {
+          const btn = document.createElement("button");
+          btn.className = "wm-item";
+
+          const iconHtml = info.icon
+            ? `<img class="wm-item-icon" src="${info.icon}" alt="${info.name}" />`
+            : `<div class="wm-item-icon-placeholder">🔑</div>`;
+
+          btn.innerHTML = `${iconHtml}<span class="wm-item-name">${info.name}</span>`;
+          btn.addEventListener("click", () => {
+            closeWalletModal();
+            connectWithProvider(provider);
+          });
+          walletList.appendChild(btn);
+        });
       }
 
+      walletModal.hidden = false;
+    }
+
+    function closeWalletModal() {
+      walletModal.hidden = true;
+    }
+
+    walletModalClose.addEventListener("click", closeWalletModal);
+    walletModal.addEventListener("click", (e) => {
+      if (e.target === walletModal) closeWalletModal();
+    });
+
+    /* ── Connect with a specific provider ── */
+    async function connectWithProvider(provider) {
       try {
         connectBtn.textContent = "Connecting...";
         connectBtn.disabled = true;
 
-        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        const accounts = await provider.request({ method: "eth_requestAccounts" });
         account = accounts[0];
 
         // Check / switch to Mainnet
-        const chainId = await window.ethereum.request({ method: "eth_chainId" });
+        const chainId = await provider.request({ method: "eth_chainId" });
         if (chainId !== CHAIN_ID) {
           try {
-            await window.ethereum.request({
+            await provider.request({
               method: "wallet_switchEthereumChain",
               params: [{ chainId: CHAIN_ID }],
             });
@@ -1709,6 +1872,9 @@
           }
         }
 
+        // Store active provider for future calls
+        window._activeProvider = provider;
+
         connected = true;
         connectBtn.textContent = shortAddr(account);
         connectBtn.classList.add("connected");
@@ -1716,6 +1882,16 @@
         connectBtn.disabled = false;
         walletFullAddr.textContent = account;
         walletDropdown.hidden = true;
+
+        // Listen for account/chain changes on this provider
+        provider.on?.("accountsChanged", (accs) => {
+          if (!accs.length) { disconnectWallet(); return; }
+          account = accs[0];
+          connectBtn.textContent = shortAddr(account);
+          walletFullAddr.textContent = account;
+          applyExposure(account);
+        });
+        provider.on?.("chainChanged", () => window.location.reload());
 
         applyExposure(account);
 
@@ -1726,15 +1902,21 @@
       }
     }
 
+    /* ── connectWallet: open picker ── */
+    function connectWallet() {
+      // Re-request so newly installed wallets are discovered
+      window.dispatchEvent(new Event("eip6963:requestProvider"));
+      setTimeout(openWalletModal, 50);
+    }
+
     async function disconnectWallet() {
-      // Revoke MetaMask permission so next connect shows the picker again
-      if (window.ethereum) {
+      // Revoke permission on active provider
+      const p = window._activeProvider;
+      if (p) {
         try {
-          await window.ethereum.request({
-            method: "wallet_revokePermissions",
-            params: [{ eth_accounts: {} }]
-          });
-        } catch (e) { /* older MM versions may not support this — ignore */ }
+          await p.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] });
+        } catch (e) { /* ignore if not supported */ }
+        window._activeProvider = null;
       }
       connected = false;
       account   = null;
@@ -1742,15 +1924,15 @@
       connectBtn.classList.remove("connected");
       connectBtn.setAttribute("aria-pressed", "false");
       walletFullAddr.textContent = "—";
+      walletDropdown.hidden = true;
       resetExposure();
     }
 
-    // Connect button: if connected → toggle dropdown; if not → connect
+    // Connect button: if connected → toggle dropdown; if not → open picker
     connectBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (connected) {
-        const isHidden = walletDropdown.hidden;
-        walletDropdown.hidden = !isHidden;
+        walletDropdown.hidden = !walletDropdown.hidden;
       } else {
         connectWallet();
       }
@@ -1768,33 +1950,6 @@
         walletDropdown.hidden = true;
       }
     });
-
-    // Listen for account / chain changes
-    if (window.ethereum) {
-      window.ethereum.on("accountsChanged", (accounts) => {
-        if (!accounts.length) { disconnectWallet(); return; }
-        account = accounts[0];
-        connectBtn.textContent = shortAddr(account);
-        applyExposure(account);
-      });
-      window.ethereum.on("chainChanged", () => window.location.reload());
-    }
-
-    // Auto-reconnect if previously connected
-    if (window.ethereum) {
-      window.ethereum.request({ method: "eth_accounts" }).then((accounts) => {
-        if (accounts.length) {
-          account   = accounts[0];
-          connected = true;
-          connectBtn.textContent = shortAddr(account);
-          connectBtn.classList.add("connected");
-          connectBtn.setAttribute("aria-pressed", "true");
-          walletFullAddr.textContent = account;
-          walletDropdown.hidden = true;
-          applyExposure(account);
-        }
-      });
-    }
 
     /* ── Mint ── */
     mintBtn.addEventListener("click", () => {
