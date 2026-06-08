@@ -1726,12 +1726,22 @@
       }
     }
 
-    function disconnectWallet() {
+    async function disconnectWallet() {
+      // Revoke MetaMask permission so next connect shows the picker again
+      if (window.ethereum) {
+        try {
+          await window.ethereum.request({
+            method: "wallet_revokePermissions",
+            params: [{ eth_accounts: {} }]
+          });
+        } catch (e) { /* older MM versions may not support this — ignore */ }
+      }
       connected = false;
       account   = null;
       connectBtn.textContent = "Connect Wallet";
       connectBtn.classList.remove("connected");
       connectBtn.setAttribute("aria-pressed", "false");
+      walletFullAddr.textContent = "—";
       resetExposure();
     }
 
