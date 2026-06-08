@@ -1519,50 +1519,91 @@
       btn.addEventListener("click", () => { qty = Number(btn.dataset.qty); renderQty(); });
     });
 
-    /* ── Exposure score (mock — replace with Etherscan API later) ── */
-    function calcExposure(address) {
-      // Deterministic mock based on address until real API is wired
-      const seed = parseInt(address.slice(2, 10), 16);
-      const age  = 180 + (seed % 1800);          // 180–1980 days
-      const idx  = ((seed % 100) / 100).toFixed(2);
-      const risk = Math.round(20 + (seed % 60));  // 20–80%
+    /* ── Exposure classification ── */
+    const EXPOSURE_CLASSES = [
+      { min: 0,  max: 25, label: "Low Exposure",     color: "var(--teal)" },
+      { min: 25, max: 50, label: "Moderate Risk",    color: "var(--amber)" },
+      { min: 50, max: 75, label: "High Exposure",    color: "var(--red)" },
+      { min: 75, max: 101,label: "Ancient Exposure", color: "var(--purple)" },
+    ];
 
-      const classes = [
-        { min: 0,  max: 30, label: "Low Exposure",     color: "var(--teal)" },
-        { min: 30, max: 55, label: "Moderate Risk",    color: "var(--amber)" },
-        { min: 55, max: 75, label: "High Exposure",    color: "var(--red)" },
-        { min: 75, max: 100,label: "Ancient Exposure", color: "var(--purple)" },
-      ];
-      const cls = classes.find(c => risk >= c.min && risk < c.max) || classes[3];
-
-      const firstDate = new Date(Date.now() - age * 86400000)
-        .toISOString().slice(0, 10);
-
-      return { age, idx, risk, cls, firstDate };
-    }
-
-    function applyExposure(address) {
-      const { age, idx, risk, cls, firstDate } = calcExposure(address);
-
-      riskScoreEl.innerHTML    = `${risk}<sup>%</sup>`;
-      classValueEl.textContent = cls.label;
-      classValueEl.style.color = cls.color;
-      walletAgeEl.textContent  = `${age.toLocaleString()} days`;
-      firstSeenEl.textContent  = firstDate;
-      interactEl.textContent   = `${20 + (parseInt(address.slice(4,8),16) % 200)} contracts`;
-      exposureEl.textContent   = idx;
-
-      // Curve dot position mapped to risk %
-      const x = Math.round(10 + (risk / 100) * 160);
-      const y = Math.round(80 - (risk / 100) * 60);
-      document.getElementById("curveDot").setAttribute("cx", x);
-      document.getElementById("curveDot").setAttribute("cy", y);
-      document.getElementById("curveIndicator").setAttribute("x1", x);
-      document.getElementById("curveIndicator").setAttribute("x2", x);
-
+    async function applyExposure(address) {
+      // Show scanning state
+      scanStatusEl.textContent = "Scanning...";
+      classValueEl.textContent = "Scanning";
+      classValueEl.style.color = "var(--muted)";
+      walletAgeEl.textContent  = "—";
+      firstSeenEl.textContent  = "—";
+      interactEl.textContent   = "—";
+      exposureEl.textContent   = "—";
+      riskScoreEl.innerHTML    = "—";
       scanSealEl.classList.add("scanning");
-      scanStatusEl.style.color = "";
-      scanStatusEl.textContent = "Wallet Scanned · Ready to Mint";
+
+      try {
+        const API_KEY = "GZQQRN33JBUX6XKZI8XWWV9PHJF3RIR4JA";
+        const base    = "https://api.etherscan.io/api";
+
+        // First tx (wallet age) + total tx count in parallel
+        const [txRes, normalRes] = await Promise.all([
+          fetch(`${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1&sort=asc&apikey=${API_KEY}`),
+          fetch(`${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=1&sort=desc&apikey=${API_KEY}`),
+        ]);
+
+        const txData     = await txRes.json();
+        const normalData = await normalRes.json();
+
+        // Wallet age
+        let ageDays   = 0;
+        let firstDate = "—";
+        if (txData.result && txData.result.length > 0) {
+          const firstTs = parseInt(txData.result[0].timeStamp);
+          ageDays   = Math.floor((Date.now() / 1000 - firstTs) / 86400);
+          firstDate = new Date(firstTs * 1000).toISOString().slice(0, 10);
+        }
+
+        // Tx count → unique contracts interacted
+        const countRes  = await fetch(`${base}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10000&sort=asc&apikey=${API_KEY}`);
+        const countData = await countRes.json();
+        const txList    = countData.result || [];
+        const uniqueContracts = new Set(
+          txList.filter(tx => tx.to && tx.to !== "").map(tx => tx.to.toLowerCase())
+        ).size;
+
+        // Exposure index: normalized 0–1 based on age + contract diversity
+        const ageScore      = Math.min(ageDays / 1825, 1);      // max 5 years
+        const contractScore = Math.min(uniqueContracts / 500, 1); // max 500
+        const exposureIdx   = ((ageScore * 0.6 + contractScore * 0.4)).toFixed(2);
+
+        // Risk %: higher exposure = higher infection compatibility
+        const risk = Math.round(parseFloat(exposureIdx) * 100);
+        const cls  = EXPOSURE_CLASSES.find(c => risk >= c.min && risk < c.max) || EXPOSURE_CLASSES[3];
+
+        // Update UI
+        riskScoreEl.innerHTML    = `${risk}<sup>%</sup>`;
+        classValueEl.textContent = cls.label;
+        classValueEl.style.color = cls.color;
+        walletAgeEl.textContent  = ageDays > 0 ? `${ageDays.toLocaleString()} days` : "New wallet";
+        firstSeenEl.textContent  = firstDate;
+        interactEl.textContent   = `${uniqueContracts} contracts`;
+        exposureEl.textContent   = exposureIdx;
+
+        // Curve dot
+        const x = Math.round(10 + (risk / 100) * 160);
+        const y = Math.round(80 - (risk / 100) * 60);
+        document.getElementById("curveDot").setAttribute("cx", x);
+        document.getElementById("curveDot").setAttribute("cy", y);
+        document.getElementById("curveIndicator").setAttribute("x1", x);
+        document.getElementById("curveIndicator").setAttribute("x2", x);
+
+        scanStatusEl.textContent = "Wallet Scanned · Ready to Mint";
+        scanStatusEl.style.color = "";
+
+      } catch (err) {
+        console.error("Etherscan error:", err);
+        classValueEl.textContent = "Scan Failed";
+        classValueEl.style.color = "var(--red)";
+        scanStatusEl.textContent = "Scan error — retry";
+      }
     }
 
     function resetExposure() {
