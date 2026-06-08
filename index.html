@@ -807,6 +807,53 @@
       line-height: 1.55;
     }
 
+    /* ─── Wallet dropdown ─── */
+    .wallet-wrap {
+      position: relative;
+    }
+
+    .wallet-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      z-index: 100;
+      min-width: 200px;
+      border: 1px solid var(--rule-strong);
+      background: var(--paper-3);
+      box-shadow: var(--shadow-md);
+      animation: fadeIn 0.15s ease both;
+    }
+
+    .wallet-dropdown-addr {
+      padding: 10px 14px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--rule);
+      word-break: break-all;
+    }
+
+    .wallet-disconnect {
+      width: 100%;
+      min-height: 38px;
+      border: none;
+      background: transparent;
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-align: left;
+      padding: 0 14px;
+      cursor: pointer;
+    }
+
+    .wallet-disconnect:hover {
+      background: var(--red-bg);
+      border-color: transparent;
+    }
+
     /* ─── Info popup ─── */
     .info-wrap {
       position: relative;
@@ -1237,7 +1284,13 @@
             </div>
           </div>
         </div>
-        <button class="connect" id="connect" aria-pressed="false">Connect Wallet</button>
+        <div class="wallet-wrap">
+          <button class="connect" id="connect" aria-pressed="false">Connect Wallet</button>
+          <div class="wallet-dropdown" id="walletDropdown" hidden>
+            <div class="wallet-dropdown-addr" id="walletFullAddr">—</div>
+            <button class="wallet-disconnect" id="disconnectBtn">Disconnect</button>
+          </div>
+        </div>
       </section>
     </header>
 
@@ -1476,7 +1529,10 @@
     /* ── DOM refs ── */
     const qtyEl        = document.getElementById("qty");
     const totalEl      = document.getElementById("total");
-    const connectBtn   = document.getElementById("connect");
+    const connectBtn      = document.getElementById("connect");
+    const walletDropdown  = document.getElementById("walletDropdown");
+    const walletFullAddr  = document.getElementById("walletFullAddr");
+    const disconnectBtn   = document.getElementById("disconnectBtn");
     const mintBtn      = document.getElementById("mint");
     const scanStatusEl = document.getElementById("scanStatus");
     const riskScoreEl  = document.getElementById("riskScore");
@@ -1658,6 +1714,8 @@
         connectBtn.classList.add("connected");
         connectBtn.setAttribute("aria-pressed", "true");
         connectBtn.disabled = false;
+        walletFullAddr.textContent = account;
+        walletDropdown.hidden = true;
 
         applyExposure(account);
 
@@ -1677,9 +1735,28 @@
       resetExposure();
     }
 
-    connectBtn.addEventListener("click", () => {
-      if (connected) disconnectWallet();
-      else connectWallet();
+    // Connect button: if connected → toggle dropdown; if not → connect
+    connectBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (connected) {
+        const isHidden = walletDropdown.hidden;
+        walletDropdown.hidden = !isHidden;
+      } else {
+        connectWallet();
+      }
+    });
+
+    // Disconnect button inside dropdown
+    disconnectBtn.addEventListener("click", () => {
+      walletDropdown.hidden = true;
+      disconnectWallet();
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!walletDropdown.hidden && !walletDropdown.contains(e.target) && e.target !== connectBtn) {
+        walletDropdown.hidden = true;
+      }
     });
 
     // Listen for account / chain changes
@@ -1702,6 +1779,8 @@
           connectBtn.textContent = shortAddr(account);
           connectBtn.classList.add("connected");
           connectBtn.setAttribute("aria-pressed", "true");
+          walletFullAddr.textContent = account;
+          walletDropdown.hidden = true;
           applyExposure(account);
         }
       });
