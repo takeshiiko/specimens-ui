@@ -1233,7 +1233,7 @@
             </div>
             <div class="info-popup-divider"></div>
             <div class="info-popup-note">
-              Wallet exposure shifts reveal probabilities — not a guarantee.
+              Older wallets have higher Clean compatibility at reveal. New wallets lean toward Infected. Not a guarantee — odds shift, outcomes vary.
             </div>
           </div>
         </div>
@@ -1304,7 +1304,7 @@
               <div>
                 <div class="label">Exposure Classification</div>
                 <div class="exposure-class" id="classValue">Moderate Risk</div>
-                <p class="exposure-note">Wallet age shifts compatibility probabilities — not a rarity guarantee.</p>
+                <p class="exposure-note">Older wallets have higher Clean compatibility. Not a guarantee — but the odds shift.</p>
               </div>
             </div>
 
@@ -1317,7 +1317,7 @@
 
             <div class="risk-section">
               <div class="risk-number-wrap">
-                <span class="label">Infection Risk</span>
+                <span class="label">Clean Compatibility</span>
                 <div class="risk-number" id="riskScore" aria-live="polite">36<sup>%</sup></div>
               </div>
               <div class="curve-wrap" aria-label="Exposure curve chart" role="img">
@@ -1404,7 +1404,7 @@
           </div>
         </div>
         <div class="reveal-logic-note">
-          Wallet exposure shifts probabilities at reveal. Old wallets are not safer — they may be more compatible.
+          Older wallets are more compatible with the organism — higher chance of Clean at reveal. New wallets lean Infected.
         </div>
       </div>
     </section>
@@ -1519,12 +1519,12 @@
       btn.addEventListener("click", () => { qty = Number(btn.dataset.qty); renderQty(); });
     });
 
-    /* ── Exposure classification ── */
+    /* ── Compatibility classification (higher = more likely Clean) ── */
     const EXPOSURE_CLASSES = [
-      { min: 0,  max: 25, label: "Low Exposure",     color: "var(--teal)" },
-      { min: 25, max: 50, label: "Moderate Risk",    color: "var(--amber)" },
-      { min: 50, max: 75, label: "High Exposure",    color: "var(--red)" },
-      { min: 75, max: 101,label: "Ancient Exposure", color: "var(--purple)" },
+      { min: 0,  max: 25, label: "Incompatible",       color: "var(--muted)" },
+      { min: 25, max: 50, label: "Low Compatibility",  color: "var(--amber)" },
+      { min: 50, max: 75, label: "Compatible",         color: "var(--teal)" },
+      { min: 75, max: 101,label: "Highly Compatible",  color: "var(--purple)" },
     ];
 
     async function applyExposure(address) {
