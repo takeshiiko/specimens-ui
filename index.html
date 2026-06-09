@@ -1340,7 +1340,7 @@
             <div class="info-popup-grid">
               <div class="info-row"><span>Supply</span><strong>10,000</strong></div>
               <div class="info-row"><span>Mint Price</span><strong>0.00054 ETH</strong></div>
-              <div class="info-row"><span>Network</span><strong>Ethereum Mainnet</strong></div>
+              <div class="info-row"><span>Network</span><strong>Sepolia Testnet</strong></div>
               <div class="info-row"><span>Reveal</span><strong>Team — single batch</strong></div>
             </div>
             <div class="info-popup-divider"></div>
@@ -1628,7 +1628,7 @@
       </div>
       <div class="footer-cell">
         <span class="footer-dot" style="background: var(--amber);" aria-hidden="true"></span>
-        Network: Ethereum Mainnet
+        Network: Sepolia Testnet
       </div>
       <div class="footer-cell">
         <span class="footer-dot" style="background: var(--purple);" aria-hidden="true"></span>
@@ -1638,8 +1638,10 @@
   </main>
 
   <script>
-    const PRICE    = 0.00054;
-    const CHAIN_ID = "0x1"; // Ethereum Mainnet
+    const PRICE       = 0.00054;
+    const CHAIN_ID    = "0xaa36a7"; // Sepolia testnet
+    const CONTRACT    = "0x9f487704563E5b567Ef2C7c1645711f24437c61D";
+    const MINT_ABI    = ["function mint(uint256 qty) payable"];
     let qty        = 1;
     let connected  = false;
     let account    = null;
@@ -1876,7 +1878,7 @@
               params: [{ chainId: CHAIN_ID }],
             });
           } catch {
-            scanStatusEl.textContent = "Switch to Ethereum Mainnet";
+            scanStatusEl.textContent = "Switch to Sepolia Testnet";
             scanStatusEl.style.color = "var(--red)";
             connectBtn.textContent = "Connect Wallet";
             connectBtn.disabled = false;
@@ -1964,21 +1966,83 @@
     });
 
     /* ── Mint ── */
-    mintBtn.addEventListener("click", () => {
+    mintBtn.addEventListener("click", async () => {
       if (!connected) {
         scanStatusEl.textContent = "Connect wallet first";
         scanStatusEl.style.color = "var(--red)";
         return;
       }
-      stage2El.classList.add("active");
-      scanStatusEl.style.color = "";
-      scanStatusEl.textContent = "Sealed · Awaiting team reveal";
+
+      const provider = window._activeProvider;
+      if (!provider) return;
+
+      const qty      = parseInt(qtyEl.textContent) || 1;
+      const value    = BigInt(Math.round(qty * PRICE * 1e18));
+      const valueHex = "0x" + value.toString(16);
+
+      // Encode mint(uint256) calldata
+      const selector  = "0xa0712d68"; // keccak256("mint(uint256)") first 4 bytes
+      const qtyPadded = qty.toString(16).padStart(64, "0");
+      const data      = selector + qtyPadded;
+
       mintBtn.disabled   = true;
-      mintBtn.textContent = "Parasite Sealed";
-      mintBtn.style.background = "linear-gradient(175deg, #2a5250, #162f30)";
-      mintBtn.style.boxShadow  = "none";
-      mintBtn.style.cursor     = "default";
+      mintBtn.textContent = "Confirm in wallet...";
+
+      try {
+        const txHash = await provider.request({
+          method: "eth_sendTransaction",
+          params: [{
+            from:  account,
+            to:    CONTRACT,
+            value: valueHex,
+            data:  data,
+          }]
+        });
+
+        mintBtn.textContent = "Minting...";
+        scanStatusEl.textContent = "Transaction sent — waiting for confirmation...";
+        scanStatusEl.style.color = "var(--amber)";
+
+        // Poll for receipt
+        const receipt = await waitForTx(provider, txHash);
+
+        if (receipt && receipt.status === "0x1") {
+          stage2El.classList.add("active");
+          scanStatusEl.style.color = "";
+          scanStatusEl.textContent = "Sealed · Awaiting team reveal";
+          mintBtn.textContent = "Parasite Sealed";
+          mintBtn.style.background = "linear-gradient(175deg, #2a5250, #162f30)";
+          mintBtn.style.boxShadow  = "none";
+          mintBtn.style.cursor     = "default";
+        } else {
+          throw new Error("Transaction failed");
+        }
+
+      } catch (err) {
+        mintBtn.disabled   = false;
+        mintBtn.textContent = "Mint Parasite";
+        if (err.code !== 4001) {
+          scanStatusEl.textContent = "Transaction failed — try again";
+          scanStatusEl.style.color = "var(--red)";
+        } else {
+          scanStatusEl.textContent = "";
+        }
+      }
     });
+
+    async function waitForTx(provider, txHash, attempts = 30) {
+      for (let i = 0; i < attempts; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+        try {
+          const receipt = await provider.request({
+            method: "eth_getTransactionReceipt",
+            params: [txHash]
+          });
+          if (receipt) return receipt;
+        } catch {}
+      }
+      return null;
+    }
 
     /* ── Animate probability bars ── */
     setTimeout(() => {
