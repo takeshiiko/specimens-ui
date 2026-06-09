@@ -194,7 +194,7 @@
 
     .mint-progress-bar {
       height: 100%;
-      width: 22.48%;
+      width: 0%;
       background: linear-gradient(90deg, var(--teal), var(--teal-light));
       transition: width 0.6s ease;
     }
@@ -1320,7 +1320,7 @@
         </div>
         <div class="stat">
           <div class="label">Minted</div>
-          <div class="value" id="mintedVal">2,241 <small>22.41%</small></div>
+          <div class="value" id="mintedVal">0 <small>0%</small></div>
           <div class="mint-progress" role="progressbar" aria-valuenow="22" aria-valuemin="0" aria-valuemax="100" aria-label="22% minted">
             <div class="mint-progress-bar" id="mintBar"></div>
           </div>
@@ -1642,6 +1642,29 @@
     const CHAIN_ID    = "0xaa36a7"; // Sepolia testnet
     const CONTRACT    = "0x8D7732a37d30aFDB22A6a3E19cC1f963BD1669b2";
     const MINT_ABI    = ["function mint(uint256 qty) payable"];
+    const RPC_URL     = "https://eth-sepolia.g.alchemy.com/v2/BOgc25TPe5MTrUCssJQCT";
+    const MAX_SUPPLY  = 10000;
+
+    // totalSupply() selector
+    async function fetchTotalSupply() {
+      try {
+        const res = await fetch(RPC_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0", id: 1, method: "eth_call",
+            params: [{ to: CONTRACT, data: "0x18160ddd" }, "latest"]
+          })
+        });
+        const { result } = await res.json();
+        const supply = parseInt(result, 16);
+        const pct    = ((supply / MAX_SUPPLY) * 100).toFixed(2);
+        document.getElementById("mintedVal").innerHTML = `${supply.toLocaleString()} <small>${pct}%</small>`;
+        document.getElementById("mintBar").style.width = pct + "%";
+      } catch {}
+    }
+
+    fetchTotalSupply();
     let qty        = 1;
     let connected  = false;
     let account    = null;
