@@ -1861,11 +1861,12 @@
           const btn = document.createElement("button");
           btn.className = "wm-item";
 
+          const safeName = info.name.replace(/[<>"'&]/g, "");
           const iconHtml = info.icon
-            ? `<img class="wm-item-icon" src="${info.icon}" alt="${info.name}" />`
+            ? `<img class="wm-item-icon" src="${info.icon.startsWith("data:image") ? info.icon : ""}" alt="" />`
             : `<div class="wm-item-icon-placeholder">🔑</div>`;
 
-          btn.innerHTML = `${iconHtml}<span class="wm-item-name">${info.name}</span>`;
+          btn.innerHTML = `${iconHtml}<span class="wm-item-name">${safeName}</span>`;
           btn.addEventListener("click", () => {
             closeWalletModal();
             connectWithProvider(provider);
