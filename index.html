@@ -2068,7 +2068,7 @@
       const selector = "0x" + Array.from(new TextEncoder().encode("mintedCount(address)"))
         .reduce((acc, b) => acc + b.toString(16).padStart(2, "0"), "");
       // Use pre-computed selector for mintedCount(address)
-      const data = "0x8d859f73" + address.slice(2).padStart(64, "0");
+      const data = "0xfddcb5ea" + address.slice(2).padStart(64, "0");
       try {
         const result = await provider.request({
           method: "eth_call",
