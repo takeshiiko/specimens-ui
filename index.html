@@ -1843,14 +1843,24 @@
       walletList.innerHTML = "";
 
       if (discoveredProviders.size === 0) {
-        // Fallback: try legacy window.ethereum
         if (window.ethereum) {
+          // Legacy injected provider (old MetaMask etc.)
           const btn = document.createElement("button");
           btn.className = "wm-item";
           btn.innerHTML = `<div class="wm-item-icon-placeholder">🦊</div><span class="wm-item-name">MetaMask</span>`;
           btn.addEventListener("click", () => {
             closeWalletModal();
             connectWithProvider(window.ethereum);
+          });
+          walletList.appendChild(btn);
+        } else if (/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
+          // Mobile: deep link to MetaMask app
+          const btn = document.createElement("button");
+          btn.className = "wm-item";
+          btn.innerHTML = `<div class="wm-item-icon-placeholder">🦊</div><span class="wm-item-name">Open in MetaMask</span>`;
+          btn.addEventListener("click", () => {
+            const url = encodeURIComponent(window.location.href);
+            window.location.href = `https://metamask.app.link/dapp/${window.location.host}`;
           });
           walletList.appendChild(btn);
         } else {
@@ -1949,7 +1959,20 @@
     function connectWallet() {
       // Re-request so newly installed wallets are discovered
       window.dispatchEvent(new Event("eip6963:requestProvider"));
-      setTimeout(openWalletModal, 50);
+
+      // Wait up to 300ms for wallets to announce, then open modal
+      const waitStart = Date.now();
+      const prevSize  = discoveredProviders.size;
+
+      function tryOpen() {
+        // If new wallets appeared or 300ms passed → open
+        if (discoveredProviders.size > prevSize || Date.now() - waitStart > 300) {
+          openWalletModal();
+        } else {
+          setTimeout(tryOpen, 50);
+        }
+      }
+      setTimeout(tryOpen, 50);
     }
 
     async function disconnectWallet() {
