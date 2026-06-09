@@ -1640,7 +1640,7 @@
   <script>
     const PRICE       = 0.00054;
     const CHAIN_ID    = "0xaa36a7"; // Sepolia testnet
-    const CONTRACT    = "0x495eDC0356c1771BcF199d9Edd76378ec35d628C";
+    const CONTRACT    = "0x8D7732a37d30aFDB22A6a3E19cC1f963BD1669b2";
     const MINT_ABI    = ["function mint(uint256 qty) payable"];
     let qty        = 1;
     let connected  = false;
@@ -2009,11 +2009,25 @@
         if (receipt && receipt.status === "0x1") {
           stage2El.classList.add("active");
           scanStatusEl.style.color = "";
-          scanStatusEl.textContent = "Sealed · Awaiting team reveal";
-          mintBtn.textContent = "Parasite Sealed";
-          mintBtn.style.background = "linear-gradient(175deg, #2a5250, #162f30)";
-          mintBtn.style.boxShadow  = "none";
-          mintBtn.style.cursor     = "default";
+
+          // Check remaining mint allowance
+          const minted = await getMintedCount(provider, account);
+          const remaining = 5 - minted;
+
+          if (remaining <= 0) {
+            scanStatusEl.textContent = "Max minted · Awaiting team reveal";
+            mintBtn.textContent = "Parasite Sealed";
+            mintBtn.style.background = "linear-gradient(175deg, #2a5250, #162f30)";
+            mintBtn.style.boxShadow  = "none";
+            mintBtn.style.cursor     = "default";
+          } else {
+            scanStatusEl.textContent = `Minted · ${remaining} remaining`;
+            mintBtn.disabled   = false;
+            mintBtn.textContent = "Mint Parasite";
+            mintBtn.style.background = "";
+            mintBtn.style.boxShadow  = "";
+            mintBtn.style.cursor     = "";
+          }
         } else {
           throw new Error("Transaction failed");
         }
@@ -2029,6 +2043,21 @@
         }
       }
     });
+
+    async function getMintedCount(provider, address) {
+      // mintedCount(address) selector: keccak256("mintedCount(address)") = 0x...
+      const selector = "0x" + Array.from(new TextEncoder().encode("mintedCount(address)"))
+        .reduce((acc, b) => acc + b.toString(16).padStart(2, "0"), "");
+      // Use pre-computed selector for mintedCount(address)
+      const data = "0x8d859f73" + address.slice(2).padStart(64, "0");
+      try {
+        const result = await provider.request({
+          method: "eth_call",
+          params: [{ to: CONTRACT, data }, "latest"]
+        });
+        return parseInt(result, 16);
+      } catch { return 0; }
+    }
 
     async function waitForTx(provider, txHash, attempts = 30) {
       for (let i = 0; i < attempts; i++) {
