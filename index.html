@@ -1523,7 +1523,7 @@
       <section class="panel" aria-label="Mint parasite" style="align-self:stretch">
           <div class="panel-title">
             <span>Mint Parasite</span>
-            <span class="panel-title-badge">Max 5 per tx</span>
+            <span class="panel-title-badge" id="mintAllowance">Max 5 per wallet</span>
           </div>
           <div class="panel-inner">
             <div class="qty-stepper">
@@ -1897,6 +1897,8 @@
         walletFullAddr.textContent = account;
         walletDropdown.hidden = true;
 
+        updateMintAllowance(provider, account);
+
         // Listen for account/chain changes on this provider
         provider.on?.("accountsChanged", (accs) => {
           if (!accs.length) { disconnectWallet(); return; }
@@ -1939,6 +1941,8 @@
       connectBtn.setAttribute("aria-pressed", "false");
       walletFullAddr.textContent = "—";
       walletDropdown.hidden = true;
+      mintAllowanceEl.textContent = "Max 5 per wallet";
+      mintAllowanceEl.style.color = "";
       resetExposure();
     }
 
@@ -2011,8 +2015,9 @@
           scanStatusEl.style.color = "";
 
           // Check remaining mint allowance
-          const minted = await getMintedCount(provider, account);
+          const minted    = await getMintedCount(provider, account);
           const remaining = 5 - minted;
+          updateMintAllowance(provider, account);
 
           if (remaining <= 0) {
             scanStatusEl.textContent = "Max minted · Awaiting team reveal";
@@ -2021,7 +2026,7 @@
             mintBtn.style.boxShadow  = "none";
             mintBtn.style.cursor     = "default";
           } else {
-            scanStatusEl.textContent = `Minted · ${remaining} remaining`;
+            scanStatusEl.textContent = `Minted · ${remaining} of 5 remaining`;
             mintBtn.disabled   = false;
             mintBtn.textContent = "Mint Parasite";
             mintBtn.style.background = "";
@@ -2043,6 +2048,20 @@
         }
       }
     });
+
+    const mintAllowanceEl = document.getElementById("mintAllowance");
+
+    async function updateMintAllowance(provider, address) {
+      const minted    = await getMintedCount(provider, address);
+      const remaining = 5 - minted;
+      if (remaining <= 0) {
+        mintAllowanceEl.textContent = "Fully minted";
+        mintAllowanceEl.style.color = "var(--red)";
+      } else {
+        mintAllowanceEl.textContent = `${remaining} of 5 remaining`;
+        mintAllowanceEl.style.color = "";
+      }
+    }
 
     async function getMintedCount(provider, address) {
       // mintedCount(address) selector: keccak256("mintedCount(address)") = 0x...
